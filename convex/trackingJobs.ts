@@ -165,12 +165,14 @@ export const runTrackingJob = internalAction({
       }
     }
 
-    // 4. Update the document snapshot
+    // 4. Update the document snapshot — preserve existing category/subcategory
     await ctx.runMutation(api.documents.upsertDocument, {
       userId: args.userId,
       fileId: document.fileId,
       title: document.title,
       docUrl: document.docUrl,
+      category: document.category,
+      subcategory: document.subcategory,
       lastAnalysedAt: Date.now(),
       latestApprovalSnapshot: latestSnapshot,
     });

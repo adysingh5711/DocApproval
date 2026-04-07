@@ -87,8 +87,9 @@ export async function POST(req: Request) {
 
     // 3. Fetch approval status (Google Workspace Approvals API)
     // Also requires supportsAllDrives for Shared Drive files
+    const fields = "items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))";
     const approvalsRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))&supportsAllDrives=true`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}/approvals?fields=${encodeURIComponent(fields)}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -103,7 +104,9 @@ export async function POST(req: Request) {
         )[0];
       }
     } else {
-      console.warn(`[analyse] Approvals fetch failed [${approvalsRes.status}] — continuing without approval data`);
+      const errBody = await approvalsRes.json().catch(() => ({}));
+      console.error(`[analyse] Approvals fetch failed [${approvalsRes.status}]:`, JSON.stringify(errBody));
+      console.warn(`[analyse] Continuing without approval data due to fetch error.`);
     }
 
     // 4. Resolve Convex user by email and upsert the document

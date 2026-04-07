@@ -46,6 +46,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-success-bg: #ecfdf5;
+  --color-success-text: #059669;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #d97706;
+  --color-danger-bg: #fff1f2;
+  --color-danger-text: #e11d48;
 }
 
 :root {
@@ -127,4 +134,10 @@
   html {
     @apply font-sans;
   }
+}
+
+@layer components {
+  .badge-success { @apply bg-success-bg text-success-text border-success-text/20 border; }
+  .badge-warning { @apply bg-warning-bg text-warning-text border-warning-text/20 border; }
+  .badge-danger  { @apply bg-danger-bg text-danger-text border-danger-text/20 border; }
 }

@@ -1,4 +1,4 @@
-import { mutation, query, internalQuery } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getTokens = query({
@@ -17,14 +17,26 @@ export const getTokens = query({
   },
 });
 
+export const updateTokens = internalMutation({
+  args: {
+    userId: v.id("users"),
+    accessToken: v.string(),
+    tokenExpiry: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      accessToken: args.accessToken,
+      tokenExpiry: args.tokenExpiry,
+    });
+  },
+});
+
 export const getByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    // Wait, we didn't index by email. We can just filter. Or index it.
-    // Filtering is fine for a small scale users table, but let's just filter.
     return await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
+      .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
   },
 });
@@ -57,7 +69,6 @@ export const upsertUserTokens = mutation({
       .unique();
 
     if (existing) {
-      // Only update tokens if they are provided, else keep existing
       const updates: any = {};
       if (args.accessToken !== undefined) updates.accessToken = args.accessToken;
       if (args.refreshToken !== undefined) updates.refreshToken = args.refreshToken;
@@ -75,5 +86,19 @@ export const upsertUserTokens = mutation({
         tokenExpiry: args.tokenExpiry,
       });
     }
+  },
+});
+
+export const updateSettings = mutation({
+  args: {
+    userId: v.id("users"),
+    reminderSubject: v.optional(v.string()),
+    reminderBody: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.userId, {
+      reminderSubject: args.reminderSubject,
+      reminderBody: args.reminderBody,
+    });
   },
 });

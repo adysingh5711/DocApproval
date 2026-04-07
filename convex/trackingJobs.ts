@@ -1,6 +1,6 @@
 import { internalAction, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 export const getByDocument = query({
@@ -103,12 +103,93 @@ export const updateJobState = mutation({
 export const runTrackingJob = internalAction({
   args: { documentId: v.id("documents"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    // Note: Since this is an action, we can't directly read the DB, we have to call queries/mutations
-    // But since the actual API call logic for Google is happening here we might need a Next.js API route to be called if we don't do fetch here.
+    // 1. Get tokens and job info
+    const tokens = await ctx.runQuery(internal.users.getTokensById, { userId: args.userId });
+    const job = await ctx.runQuery(api.trackingJobs.getByDocument, { documentId: args.documentId });
+    const document = await ctx.runQuery(api.documents.get, { documentId: args.documentId });
     
-    // Placeholder logic for now to prevent build errors
-    // In a real scenario, this would fetch tokens and call Google API
-    console.log("Running tracking job for document:", args.documentId);
-    return;
+    if (!tokens || !job || !document || !job.active) return;
+
+    let accessToken = tokens.accessToken;
+
+    // 2. Refresh token if expired (or missing)
+    const isExpired = !tokens.tokenExpiry || Date.now() > tokens.tokenExpiry - 60000; // 1 min buffer
+    if (isExpired && tokens.refreshToken) {
+      console.log("Token expired for user", args.userId, "- refreshing...");
+      const response = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          refresh_token: tokens.refreshToken,
+          grant_type: "refresh_token",
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        accessToken = data.access_token;
+        const expiry = Date.now() + data.expires_in * 1000;
+        
+        await ctx.runMutation(internal.users.updateTokens, {
+          userId: args.userId,
+          accessToken: data.access_token,
+          tokenExpiry: expiry,
+        });
+
+        // Note: My existing upsertUserTokens mutation uses googleId to lookup.
+        // We might need a generic `updateUserTokens` mutation for actions.
+      } else {
+        console.error("Failed to refresh token", await response.text());
+        return;
+      }
+    }
+
+    if (!accessToken) return;
+
+    // 3. Fetch latest from Google Drive
+    console.log("Syncing document", document.title, "(", args.documentId, ")");
+    
+    const approvalsRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${document.fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    
+    let latestSnapshot = null;
+    if (approvalsRes.ok) {
+      const data = await approvalsRes.json();
+      if (data.items?.length > 0) {
+        latestSnapshot = data.items.sort((a: any, b: any) => 
+          new Date(b.createTime).getTime() - new Date(a.createTime).getTime())[0];
+      }
+    }
+
+    // 4. Update the document snapshot
+    await ctx.runMutation(api.documents.upsertDocument, {
+      userId: args.userId,
+      fileId: document.fileId,
+      title: document.title,
+      docUrl: document.docUrl,
+      lastAnalysedAt: Date.now(),
+      latestApprovalSnapshot: latestSnapshot,
+    });
+
+    // 5. Schedule the next run
+    const nextRunAt = Date.now() + job.intervalMs;
+    const convexJobId = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
+      documentId: args.documentId,
+      userId: args.userId,
+    });
+
+    // 6. Update job state
+    await ctx.runMutation(api.trackingJobs.updateJobState, {
+      jobId: job._id,
+      updates: {
+        lastRunAt: Date.now(),
+        nextRunAt,
+        convexJobId,
+      }
+    });
   },
 });

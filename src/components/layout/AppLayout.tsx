@@ -47,8 +47,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           />
           <NavItem 
             icon={<Settings size={20} />} 
-            label="Categories" 
-            href="/settings/categories" 
+            label="Settings" 
+            href="/settings" 
             active={pathname.startsWith("/settings")} 
           />
         </nav>
@@ -72,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Link href="/analyse" className={`p-2 rounded-full ${pathname.startsWith("/analyse") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
           <Search size={24} />
         </Link>
-        <Link href="/settings/categories" className={`p-2 rounded-full ${pathname.startsWith("/settings") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
+        <Link href="/settings" className={`p-2 rounded-full ${pathname.startsWith("/settings") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
           <Settings size={24} />
         </Link>
       </nav>

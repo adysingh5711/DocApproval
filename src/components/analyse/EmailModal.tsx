@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { useQuery } from "convex/react";
+import { useSession } from "next-auth/react";
+import { api } from "../../../convex/_generated/api";
+
 interface EmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +20,9 @@ interface EmailModalProps {
 }
 
 export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: EmailModalProps) {
+  const { data: session } = useSession();
+  const user = useQuery(api.users.getByEmail as any, session?.user?.email ? { email: session.user.email } : "skip");
+
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,11 +30,17 @@ export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: Emai
 
   useEffect(() => {
     if (open) {
-      setSubject(`Approval Reminder: ${docTitle || "{Document Title}"}`);
-      setBody(`Kindly review the document ${docUrl || "{Document Link}"} sent for approval and update the status accordingly.`);
+      let defaultSubject = user?.reminderSubject || "Approval Reminder: {Document Title}";
+      let defaultBody = user?.reminderBody || "Kindly review the document {Document Link} sent for approval and update the status accordingly.";
+
+      const title = docTitle || "Untitled Document";
+      const link = docUrl || "#";
+
+      setSubject(defaultSubject.replace(/{Document Title}/g, title));
+      setBody(defaultBody.replace(/{Document Link}/g, link).replace(/{Document Title}/g, title));
       setError("");
     }
-  }, [open, docTitle, docUrl]);
+  }, [open, docTitle, docUrl, user]);
 
   const handleSend = async () => {
     setLoading(true);

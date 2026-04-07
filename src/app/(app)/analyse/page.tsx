@@ -20,26 +20,27 @@ export default function AnalysePage() {
 
   const router = useRouter();
   const [url, setUrl] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedCategory = categoriesList?.find(c => c._id === categoryId);
+  const selectedCategory = categoriesList?.find(c => c.name === categoryName);
 
   const handleAnalyse = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Regex to capture fileId
-    const match = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+    // Improved Regex to capture fileId from various Google Doc/Drive URLs
+    // Supports: docs.google.com/document/d/ID, drive.google.com/file/d/ID, etc.
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})\//);
     if (!match) {
-      setError("Invalid Google Docs URL. Please check the link and try again.");
+      setError("Invalid Google Docs/Drive URL. Please check the link and try again.");
       return;
     }
     const fileId = match[1];
 
-    if (!categoryId || !subcategory) {
+    if (!categoryName || !subcategory) {
       setError("Please select both category and subcategory.");
       setLoading(false);
       return;
@@ -52,7 +53,7 @@ export default function AnalysePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           fileId, 
-          category: selectedCategory?.name || "", 
+          category: categoryName, 
           subcategory 
         }),
       });
@@ -99,8 +100,8 @@ export default function AnalysePage() {
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select 
-                  value={categoryId} 
-                  onValueChange={(val) => { setCategoryId(val || ""); setSubcategory(""); }}
+                  value={categoryName} 
+                  onValueChange={(val) => { setCategoryName(val || ""); setSubcategory(""); }}
                   disabled={categoriesList === undefined}
                 >
                   <SelectTrigger id="category">
@@ -108,7 +109,7 @@ export default function AnalysePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {(categoriesList || []).map(cat => (
-                      <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                      <SelectItem key={cat._id} value={cat.name}>{cat.name}</SelectItem>
                     ))}
                     {categoriesList !== undefined && categoriesList.length === 0 && (
                       <SelectItem value="none" disabled>No categories found</SelectItem>
@@ -121,10 +122,10 @@ export default function AnalysePage() {
                 <Select 
                   value={subcategory} 
                   onValueChange={(val) => setSubcategory(val || "")}
-                  disabled={!categoryId || categoriesList === undefined}
+                  disabled={!categoryName || categoriesList === undefined}
                 >
                   <SelectTrigger id="subcategory">
-                    <SelectValue placeholder={!categoryId ? "Pick a category first" : "Select Subcategory"} />
+                    <SelectValue placeholder={!categoryName ? "Pick a category first" : "Select Subcategory"} />
                   </SelectTrigger>
                   <SelectContent>
                     {(selectedCategory?.subcategories || []).map(sub => (

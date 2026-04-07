@@ -11,38 +11,89 @@ export async function POST(req: Request) {
   try {
     // 1. Authenticate user
     const session = await getServerSession(authOptions);
-    if (!session || !(session as any).accessToken || !session.user?.email) {
+    if (!session || !session.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if token refresh failed (e.g. refresh token revoked)
+    const tokenError = (session as any).tokenError as string | undefined;
+    if (tokenError) {
+      return NextResponse.json(
+        { error: "Your Google session has expired. Please sign out and sign back in to re-authorize." },
+        { status: 401 }
+      );
+    }
+
     const accessToken = (session as any).accessToken;
+    if (!accessToken) {
+      return NextResponse.json({ error: "No access token. Please sign out and sign back in." }, { status: 401 });
+    }
+
     const { fileId, category, subcategory } = await req.json();
 
     if (!fileId) {
       return NextResponse.json({ error: "fileId is required" }, { status: 400 });
     }
 
+    // Debug: verify which Google account the token belongs to
+    const tokenInfoRes = await fetch(
+      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
+    );
+    const tokenInfo = await tokenInfoRes.json();
+    console.log("[analyse] Token info:", {
+      email: tokenInfo.email,
+      expires_in: tokenInfo.expires_in,
+      scope: tokenInfo.scope,
+      error: tokenInfo.error,
+    });
+
     // 2. Fetch title from Drive API
+    // supportsAllDrives=true is REQUIRED for files in Shared Drives — without it Drive returns 404
     const titleRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name&supportsAllDrives=true`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
     if (!titleRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch document metadata" }, { status: titleRes.status });
+      const errBody = await titleRes.json().catch(() => ({}));
+      console.error(`[analyse] Drive files.get failed [${titleRes.status}]:`, JSON.stringify(errBody));
+      if (titleRes.status === 401) {
+        return NextResponse.json(
+          { error: "Google access token is invalid or expired. Please sign out and sign back in." },
+          { status: 401 }
+        );
+      }
+      if (titleRes.status === 404) {
+        return NextResponse.json(
+          { error: "Document not found. Ensure the URL is correct and the file is shared with the Google account you signed in with." },
+          { status: 404 }
+        );
+      }
+      if (titleRes.status === 403) {
+        return NextResponse.json(
+          { error: "Access denied. Please ensure you have at least view access to the document." },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json(
+        { error: `Google Drive error: ${errBody?.error?.message || titleRes.statusText}` },
+        { status: titleRes.status }
+      );
     }
     const titleData = await titleRes.json();
     const title = titleData.name;
+    console.log(`[analyse] Fetched title for ${fileId}: "${title}"`);
 
-    // 3. Fetch approvals
+    // 3. Fetch approval status (Google Workspace Approvals API)
+    // Also requires supportsAllDrives for Shared Drive files
     const approvalsRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))&supportsAllDrives=true`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
-    
+
     let latestApprovalSnapshot = null;
     if (approvalsRes.ok) {
       const approvalsData = await approvalsRes.json();
@@ -51,20 +102,13 @@ export async function POST(req: Request) {
           (a: any, b: any) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
         )[0];
       }
+    } else {
+      console.warn(`[analyse] Approvals fetch failed [${approvalsRes.status}] — continuing without approval data`);
     }
 
-    // 4. Update Convex (Find user by email to get user ID first)
-    // Wait, the NextAuth session has email. Let's use `googleId` or get userId.
-    // Instead we can just pass the email or googleId we got from session.
-    // A more direct way is to add a mutation/query to get user by email.
-    // Assuming `upsertUserTokens` created the user, we can query by email.
-    // Let's rely on a new query or just let the front-end supply the Convex user ID?
-    // Frontend could pass `userId` but server should verify.
-    // Let's add a query in convex `users.ts` called `getByEmail`.
-    
-    // For now, let's assume we implement it:
+    // 4. Resolve Convex user by email and upsert the document
     const user = await convex.query(api.users.getByEmail as any, { email: session.user.email });
-    
+
     if (!user) {
       return NextResponse.json({ error: "User not found in DB" }, { status: 404 });
     }

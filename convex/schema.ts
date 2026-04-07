@@ -9,7 +9,10 @@ export default defineSchema({
     accessToken: v.optional(v.string()), // Optional because it might not be set initially
     refreshToken: v.optional(v.string()),
     tokenExpiry: v.optional(v.number()),
-  }).index("by_googleId", ["googleId"]), // Helpful to lookup user by googleId securely
+    reminderSubject: v.optional(v.string()), // Template subject
+    reminderBody: v.optional(v.string()), // Template body
+  }).index("by_googleId", ["googleId"])
+    .index("by_email", ["email"]), // Add email index for faster lookup during API requests
 
   documents: defineTable({
     userId: v.id("users"),

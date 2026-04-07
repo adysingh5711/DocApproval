@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, FileText, PlusCircle, LayoutGrid } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DocCard, Doc } from "@/components/dashboard/DocCard";
@@ -50,11 +52,20 @@ export default function DashboardPage() {
 
   if (rawDocs === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="space-y-8 animate-pulse">
+        <div className="flex flex-col gap-2">
+           <div className="h-8 w-48 bg-slate-200 rounded" />
+           <div className="h-4 w-64 bg-slate-100 rounded" />
+        </div>
+        <div className="h-16 w-full bg-slate-100 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           {[1,2,3,4].map(i => <div key={i} className="h-48 bg-slate-50 rounded-xl border border-dashed" />)}
+        </div>
       </div>
     );
   }
+
+  const isTrulyEmpty = rawDocs.length === 0;
 
   return (
     <div className="space-y-8">
@@ -88,18 +99,55 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <AnimatePresence>
-          {filteredDocs.map(doc => (
-            <DocCard key={doc.id} doc={doc} />
-          ))}
-        </AnimatePresence>
-        {filteredDocs.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500 bg-white border border-dashed rounded-xl">
-            No documents found matching your filters.
+      {isTrulyEmpty ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-20 bg-white border-2 border-dashed border-slate-200 rounded-3xl text-center space-y-6 max-w-2xl mx-auto shadow-sm"
+        >
+          <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shadow-inner">
+            <PlusCircle size={40} />
           </div>
-        )}
-      </motion.div>
+          <div className="space-y-2 px-6">
+            <h2 className="text-2xl font-bold text-slate-900">Your library is empty</h2>
+            <p className="text-slate-500 max-w-sm mx-auto">
+              Get started by submitting your first Google Doc for analysis and tracking. 
+              We'll help you monitor approvals in real-time.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/analyse">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                Analyse My First Doc
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      ) : (
+        <>
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredDocs.map(doc => (
+                <DocCard key={doc.id} doc={doc} />
+              ))}
+            </AnimatePresence>
+            {filteredDocs.length === 0 && (
+              <div className="col-span-full py-20 text-center text-slate-500 bg-white border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400">
+                   <Search size={24} />
+                </div>
+                <div>
+                   <p className="font-medium text-slate-900">No documents found</p>
+                   <p className="text-sm">Try adjusting your search query or filters.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => { setQuery(""); setCategoryFilter("all"); }}>
+                   Clear Filters
+                </Button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
     </div>
   );
 }

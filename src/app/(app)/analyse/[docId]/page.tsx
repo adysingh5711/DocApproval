@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { ReviewersTable } from "@/components/analyse/ReviewersTable";
 import { EmailModal } from "@/components/analyse/EmailModal";
 import { TrackingConfigPanel } from "@/components/analyse/TrackingConfigPanel";
-import { ExternalLink, Mail, Clock } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
+import { ExternalLink, Mail, Clock, Loader2, RefreshCw } from "lucide-react";
 
 const statusColorMap = {
   APPROVED: "success",
@@ -22,6 +22,7 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [targetEmail, setTargetEmail] = useState("");
   const [trackingPanelOpen, setTrackingPanelOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const document = useQuery(api.documents.getByFileId, { fileId: docId });
   const trackingJob = useQuery(api.trackingJobs.getByDocument, document?._id ? { documentId: document._id } : "skip" as any);
@@ -53,6 +54,27 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
   const openEmailModal = (email: string) => {
     setTargetEmail(email);
     setEmailModalOpen(true);
+  };
+
+  const handleSyncNow = async () => {
+    if (!document) return;
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/analyse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          fileId: docId, 
+          category: document.category, 
+          subcategory: document.subcategory 
+        }),
+      });
+      if (!res.ok) throw new Error("Sync failed");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleRemindAll = () => {
@@ -87,15 +109,27 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
         <div className="space-y-2 flex-1 pt-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 line-clamp-1">{approvalData.title}</h1>
-            <a 
-              href={`https://docs.google.com/document/d/${docId}`}
-              target="_blank" 
-              rel="noreferrer"
-              className="text-slate-400 hover:text-indigo-600 transition-colors"
-              title="Open Original Document"
-            >
-              <ExternalLink size={20} />
-            </a>
+            <div className="flex items-center gap-2">
+              <a 
+                href={`https://docs.google.com/document/d/${docId}`}
+                target="_blank" 
+                rel="noreferrer"
+                className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                title="Open Original Document"
+              >
+                <ExternalLink size={18} />
+              </a>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSyncNow}
+                disabled={syncing}
+                className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                title="Sync from Google Drive"
+              >
+                <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
+              </Button>
+            </div>
           </div>
           {approvalData.isTrackingActive && (
              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
@@ -104,9 +138,15 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
              </div>
           )}
         </div>
-        <div className="flex items-center gap-4 text-sm font-medium text-slate-500 bg-white px-4 py-2 border rounded-full shadow-sm">
-          <div className="h-6 w-6 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 shrink-0">U</div>
-          Current User
+        
+        <div className="flex items-center gap-4 text-xs font-medium text-slate-500 bg-white px-4 py-2 border rounded-full shadow-sm">
+          <div className="flex items-center gap-2 pr-3 border-r">
+             <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+             Live Connection
+          </div>
+          <div className="pl-1">
+            Last Synced: {document?.lastAnalysedAt ? new Date(document.lastAnalysedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+          </div>
         </div>
       </div>
 

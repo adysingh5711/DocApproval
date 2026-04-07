@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GoogleProfileHover, ReviewerAvatar } from "@/components/shared/GoogleProfileHover";
 
 interface Reviewer {
   name: string;
   email: string;
   response: "APPROVED" | "PENDING" | "DECLINED" | "NO_RESPONSE";
+  actionTime?: string;
 }
 
 const statusColorMap = {
@@ -24,8 +26,9 @@ export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[],
       <Table>
         <TableHeader className="bg-slate-50/80">
           <TableRow>
-            <TableHead>Reviewer</TableHead>
+            <TableHead className="w-[40%]">Reviewer</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Action Time</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -39,21 +42,41 @@ export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[],
               className="group border-b last:border-0 hover:bg-slate-50/50 transition-colors"
             >
               <TableCell className="py-4">
-                <div className="font-medium text-slate-900">{r.name}</div>
-                <div className="text-xs text-slate-500">{r.email}</div>
+                <GoogleProfileHover email={r.email} name={r.name}>
+                  <div className="flex items-start gap-2 cursor-pointer group/hover w-fit">
+                    <ReviewerAvatar
+                      email={r.email}
+                      name={r.name}
+                      className="h-8 w-8 border border-slate-200 transition-transform group-hover/hover:scale-105"
+                    />
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-slate-900 leading-tight group-hover/hover:text-indigo-600 transition-colors">
+                        {r.name}
+                      </div>
+                      <div className="text-xs text-slate-500 group-hover/hover:text-indigo-400 transition-colors">
+                        {r.email}
+                      </div>
+                    </div>
+                  </div>
+                </GoogleProfileHover>
               </TableCell>
               <TableCell>
-                <Badge variant={statusColorMap[r.response] as any} className="font-semibold text-[10px] py-0.5 px-2">
+                <Badge variant={statusColorMap[r.response] as any} className="font-bold text-[10px] py-0.5 px-2">
                   {r.response === "NO_RESPONSE" ? "PENDING" : r.response}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <div className="text-sm text-slate-500">
+                  {r.actionTime || "—"}
+                </div>
+              </TableCell>
               <TableCell className="text-right">
-                <Button 
+                <Button
                   disabled={r.response !== "NO_RESPONSE"}
-                  variant="outline" 
+                  variant="outline"
                   size="sm"
                   onClick={() => onRemind(r.email)}
-                  className="rounded-full hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-full hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed h-8 text-xs font-semibold px-4"
                 >
                   Remind
                 </Button>
@@ -62,7 +85,7 @@ export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[],
           ))}
           {reviewers.length === 0 && (
             <TableRow>
-              <TableCell colSpan={3} className="h-24 text-center text-slate-500">
+              <TableCell colSpan={4} className="h-24 text-center text-slate-500">
                 No reviewers found for this document.
               </TableCell>
             </TableRow>

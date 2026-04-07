@@ -26,6 +26,7 @@ export default function DashboardPage() {
     if (!rawDocs) return [];
     return rawDocs.map((d: any) => ({
       id: d.fileId,
+      _id: d._id, // Pass Convex internal ID for deletion
       title: d.title,
       status: d.latestApprovalSnapshot?.status || "PENDING",
       category: d.category || "Uncategorized",
@@ -112,7 +113,7 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold text-slate-900">Your library is empty</h2>
             <p className="text-slate-500 max-w-sm mx-auto">
               Get started by submitting your first Google Doc for analysis and tracking. 
-              We'll help you monitor approvals in real-time.
+              We&apos;ll help you monitor approvals in real-time.
             </p>
           </div>
           <div className="flex items-center gap-4">

@@ -44,6 +44,9 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
         name: r.reviewer?.displayName || "Unknown",
         email: r.reviewer?.emailAddress || "",
         response: r.response as "NO_RESPONSE" | "APPROVED" | "DECLINED",
+        actionTime: r.response !== "NO_RESPONSE" && snap?.modifyTime 
+          ? new Date(snap.modifyTime).toLocaleString("en-GB", { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) 
+          : undefined,
       })),
       _id: document._id,
     };

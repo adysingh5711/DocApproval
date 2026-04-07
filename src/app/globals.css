@@ -136,8 +136,17 @@
   }
 }
 
-@layer components {
-  .badge-success { @apply bg-success-bg text-success-text border-success-text/20 border; }
-  .badge-warning { @apply bg-warning-bg text-warning-text border-warning-text/20 border; }
-  .badge-danger  { @apply bg-danger-bg text-danger-text border-danger-text/20 border; }
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-300;
+  }
 }

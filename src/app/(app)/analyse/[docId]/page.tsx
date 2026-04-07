@@ -184,7 +184,7 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t mt-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 pb-12 border-t mt-8">
         <Button 
           variant="outline" 
           onClick={() => setTrackingPanelOpen(true)}

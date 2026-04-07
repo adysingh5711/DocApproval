@@ -1,21 +1,89 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
 
 interface TrackingPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isTrackingActive: boolean;
+  documentId: string;
+  initialIntervalValue?: number;
+  initialIntervalUnit?: "hours" | "days" | "weeks";
+  initialAutoStop?: boolean;
 }
 
-export function TrackingConfigPanel({ open, onOpenChange, isTrackingActive }: TrackingPanelProps) {
-  const [autoStop, setAutoStop] = useState(true);
+export function TrackingConfigPanel({ 
+  open, 
+  onOpenChange, 
+  isTrackingActive, 
+  documentId,
+  initialIntervalValue = 6,
+  initialIntervalUnit = "hours",
+  initialAutoStop = true,
+}: TrackingPanelProps) {
+  const [intervalValue, setIntervalValue] = useState(initialIntervalValue);
+  const [intervalUnit, setIntervalUnit] = useState(initialIntervalUnit);
+  const [autoStop, setAutoStop] = useState(initialAutoStop);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setIntervalValue(initialIntervalValue);
+      setIntervalUnit(initialIntervalUnit);
+      setAutoStop(initialAutoStop);
+      setError("");
+    }
+  }, [open, initialIntervalValue, initialIntervalUnit, initialAutoStop]);
+
+  const handleStart = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/tracking/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId,
+          intervalValue,
+          intervalUnit,
+          autoStop,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start tracking");
+      onOpenChange(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStop = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/tracking/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to stop tracking");
+      onOpenChange(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -33,11 +101,20 @@ export function TrackingConfigPanel({ open, onOpenChange, isTrackingActive }: Tr
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="interval-value">Every</Label>
-                <Input id="interval-value" type="number" defaultValue="6" min="1" />
+                <Input 
+                  id="interval-value" 
+                  type="number" 
+                  value={intervalValue} 
+                  onChange={(e) => setIntervalValue(parseInt(e.target.value) || 1)}
+                  min="1" 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="interval-unit">Unit</Label>
-                <Select defaultValue="hours">
+                <Select 
+                  value={intervalUnit} 
+                  onValueChange={(val: any) => setIntervalUnit(val)}
+                >
                   <SelectTrigger id="interval-unit">
                     <SelectValue placeholder="Select Unit" />
                   </SelectTrigger>
@@ -80,16 +157,26 @@ export function TrackingConfigPanel({ open, onOpenChange, isTrackingActive }: Tr
                 </motion.div>
               )}
             </AnimatePresence>
+            {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
           </div>
 
           <div className="pt-6 border-t">
             {isTrackingActive ? (
-              <Button variant="destructive" className="w-full" onClick={() => onOpenChange(false)}>
-                Stop Tracking
+              <Button 
+                variant="destructive" 
+                className="w-full" 
+                onClick={handleStop}
+                disabled={loading}
+              >
+                {loading ? "Stopping..." : "Stop Tracking"}
               </Button>
             ) : (
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700" onClick={() => onOpenChange(false)}>
-                Save & Start Tracking
+              <Button 
+                className="w-full bg-indigo-600 hover:bg-indigo-700" 
+                onClick={handleStart}
+                disabled={loading}
+              >
+                {loading ? "Starting..." : "Save & Start Tracking"}
               </Button>
             )}
           </div>

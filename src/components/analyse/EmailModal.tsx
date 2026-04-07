@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,42 @@ interface EmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
+  docTitle?: string;
+  docUrl?: string;
 }
 
-export function EmailModal({ open, onOpenChange, email }: EmailModalProps) {
+export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: EmailModalProps) {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setSubject(`Approval Reminder: ${docTitle || "{Document Title}"}`);
+      setBody(`Kindly review the document ${docUrl || "{Document Link}"} sent for approval and update the status accordingly.`);
+      setError("");
+    }
+  }, [open, docTitle, docUrl]);
+
+  const handleSend = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/send-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email, subject, body }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send email");
+      onOpenChange(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -25,30 +59,38 @@ export function EmailModal({ open, onOpenChange, email }: EmailModalProps) {
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="to">To</Label>
-            <Input id="to" defaultValue={email} />
+            <Input id="to" value={email} readOnly disabled />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="subject">Subject</Label>
-            <Input id="subject" defaultValue="Approval Reminder: {Document Title}" />
+            <Input 
+              id="subject" 
+              value={subject} 
+              onChange={(e) => setSubject(e.target.value)} 
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="body">Body</Label>
             <div className="relative">
               <Textarea 
                 id="body" 
-                defaultValue="Kindly review the document {Document Link} sent for approval and update the status accordingly."
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
                 className="min-h-[120px]"
               />
-              {/* Highlight trick for later: absolute div behind textarea mapping layout could stylize variables */}
             </div>
-            <p className="text-[10px] text-slate-500">
-              <span className="font-semibold text-indigo-600 bg-indigo-50 px-1 rounded inline-block mb-1">{`{Document Link}`}</span> and <span className="font-semibold text-indigo-600 bg-indigo-50 px-1 rounded inline-block mb-1">{`{Document Title}`}</span> will be automatically replaced.
-            </p>
           </div>
+          {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => onOpenChange(false)} className="bg-indigo-600 hover:bg-indigo-700">Send Email</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button 
+            onClick={handleSend} 
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            {loading ? "Sending..." : "Send Email"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

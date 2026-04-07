@@ -3,12 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import { env } from "@/env";
+import { authOptions } from "@/lib/auth";
 
 const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
 
 // Helper to get userId from session
 async function getUserIdFromSession() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) return null;
   const user = await convex.query(api.users.getByEmail as any, { email: session.user.email });
   return user?._id || null;

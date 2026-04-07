@@ -8,24 +8,37 @@ import { DocCard, Doc } from "@/components/dashboard/DocCard";
 import { AnimatePresence, motion } from "framer-motion";
 import Fuse from "fuse.js";
 
-const mockDocs: Doc[] = [
-  { id: "doc-1", title: "Q3 Marketing Campaign Brief", status: "APPROVED", category: "Marketing", subcategory: "Campaign Brief", isTracking: false, lastAnalysedAt: "6 Apr 2026" },
-  { id: "doc-2", title: "Acme Corp NDA v2", status: "PENDING", category: "Legal", subcategory: "NDA", isTracking: true, lastAnalysedAt: "5 Apr 2026" },
-  { id: "doc-3", title: "Q1 Server Costs Report", status: "DECLINED", category: "Finance", subcategory: "Report", isTracking: false, lastAnalysedAt: "2 Apr 2026" },
-  { id: "doc-4", title: "Database Migration ADR", status: "PENDING", category: "Engineering", subcategory: "ADR", isTracking: true, lastAnalysedAt: "7 Apr 2026" },
-  { id: "doc-5", title: "Candidate Offer Letter - JS", status: "APPROVED", category: "HR", subcategory: "Offer Letter", isTracking: false, lastAnalysedAt: "7 Apr 2026" },
-];
-
-const categories = Array.from(new Set(mockDocs.map(d => d.category)));
+import { useSession } from "next-auth/react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const user = useQuery(api.users.getByEmail as any, session?.user?.email ? { email: session.user.email } : "skip");
+  const rawDocs = useQuery(api.documents.getByUserWithTracking, user?._id ? { userId: user._id } : "skip");
+
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  const fuse = useMemo(() => new Fuse(mockDocs, { keys: ["title", "category", "subcategory"], threshold: 0.3 }), []);
+  const docsMap: Doc[] = useMemo(() => {
+    if (!rawDocs) return [];
+    return rawDocs.map((d: any) => ({
+      id: d.fileId,
+      title: d.title,
+      status: d.latestApprovalSnapshot?.status || "PENDING",
+      category: d.category || "Uncategorized",
+      subcategory: d.subcategory || "None",
+      isTracking: d.isTracking || false,
+      lastAnalysedAt: new Date(d.lastAnalysedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+    }));
+  }, [rawDocs]);
+
+  const categories = useMemo(() => Array.from(new Set(docsMap.map((d) => d.category))), [docsMap]);
+
+  const fuse = useMemo(() => new Fuse(docsMap, { keys: ["title", "category", "subcategory"], threshold: 0.3 }), [docsMap]);
 
   const filteredDocs = useMemo(() => {
-    let result = mockDocs;
+    let result = docsMap;
     if (query) {
       result = fuse.search(query).map(res => res.item);
     }
@@ -33,7 +46,15 @@ export default function DashboardPage() {
       result = result.filter(d => d.category === categoryFilter);
     }
     return result;
-  }, [query, categoryFilter, fuse]);
+  }, [query, categoryFilter, fuse, docsMap]);
+
+  if (rawDocs === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

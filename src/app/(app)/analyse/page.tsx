@@ -9,16 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
+import { useQuery } from "convex/react";
+import { useSession } from "next-auth/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function AnalysePage() {
+  const { data: session } = useSession();
+  const user = useQuery(api.users.getByEmail as any, session?.user?.email ? { email: session.user.email } : "skip");
+  const categoriesList = useQuery(api.categories.getByUser, user?._id ? { userId: user._id } : "skip");
+
   const router = useRouter();
   const [url, setUrl] = useState("");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleAnalyse = (e: React.FormEvent) => {
+  const selectedCategory = categoriesList?.find(c => c._id === categoryId);
+
+  const handleAnalyse = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -30,16 +39,36 @@ export default function AnalysePage() {
     }
     const fileId = match[1];
 
-    if (!category || !subcategory) {
+    if (!categoryId || !subcategory) {
       setError("Please select both category and subcategory.");
+      setLoading(false);
       return;
     }
 
     setLoading(true);
-    // Mock API delay
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/analyse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          fileId, 
+          category: selectedCategory?.name || "", 
+          subcategory 
+        }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error || "Failed to analyse document.");
+        setLoading(false);
+        return;
+      }
+      
       router.push(`/analyse/${fileId}`);
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,28 +98,38 @@ export default function AnalysePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select value={category} onValueChange={(val) => setCategory(val || "")}>
+                <Select 
+                  value={categoryId} 
+                  onValueChange={(val) => { setCategoryId(val || ""); setSubcategory(""); }}
+                  disabled={categoriesList === undefined}
+                >
                   <SelectTrigger id="category">
-                    <SelectValue placeholder="Select Category" />
+                    <SelectValue placeholder={categoriesList === undefined ? "Loading..." : "Select Category"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                    <SelectItem value="Legal">Legal</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
+                    {(categoriesList || []).map(cat => (
+                      <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                    ))}
+                    {categoriesList !== undefined && categoriesList.length === 0 && (
+                      <SelectItem value="none" disabled>No categories found</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subcategory">Subcategory</Label>
-                <Select value={subcategory} onValueChange={(val) => setSubcategory(val || "")}>
+                <Select 
+                  value={subcategory} 
+                  onValueChange={(val) => setSubcategory(val || "")}
+                  disabled={!categoryId || categoriesList === undefined}
+                >
                   <SelectTrigger id="subcategory">
-                    <SelectValue placeholder="Select Subcategory" />
+                    <SelectValue placeholder={!categoryId ? "Pick a category first" : "Select Subcategory"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="RFC">RFC</SelectItem>
-                    <SelectItem value="ADR">ADR</SelectItem>
-                    <SelectItem value="Spec">Spec</SelectItem>
-                    <SelectItem value="NDA">NDA</SelectItem>
+                    {(selectedCategory?.subcategories || []).map(sub => (
+                      <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

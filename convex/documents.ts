@@ -11,6 +11,29 @@ export const getByUser = query({
   },
 });
 
+export const getByUserWithTracking = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const docs = await ctx.db
+      .query("documents")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const jobs = await ctx.db
+      .query("trackingJobs")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("active"), true))
+      .collect();
+
+    const activeJobDocIds = new Set(jobs.map(j => j.documentId.toString()));
+
+    return docs.map(doc => ({
+      ...doc,
+      isTracking: activeJobDocIds.has(doc._id.toString())
+    }));
+  },
+});
+
 export const getByFileId = query({
   args: { fileId: v.string() },
   handler: async (ctx, args) => {

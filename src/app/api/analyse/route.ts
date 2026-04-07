@@ -3,13 +3,14 @@ import { getServerSession } from "next-auth/next";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import { env } from "@/env";
+import { authOptions } from "@/lib/auth";
 
 const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST(req: Request) {
   try {
     // 1. Authenticate user
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session || !(session as any).accessToken || !session.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

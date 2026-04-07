@@ -54,7 +54,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="pt-4 border-t">
-          <button className="flex items-center gap-3 text-slate-500 hover:text-rose-600 transition-colors px-3 py-2 w-full">
+          <button 
+            onClick={() => window.location.href = "/login"}
+            className="flex items-center gap-3 text-slate-500 hover:text-rose-600 transition-colors px-3 py-2 w-full"
+          >
             <LogOut size={20} />
             <span className="text-sm font-medium">Logout</span>
           </button>

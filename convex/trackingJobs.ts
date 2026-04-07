@@ -2,6 +2,7 @@ import { internalAction, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { fetchReviewerTimestamps } from "./lib/fetchReviewerTimestamps";
 
 export const getByDocument = query({
   args: { documentId: v.id("documents") },
@@ -162,6 +163,15 @@ export const runTrackingJob = internalAction({
       if (data.items?.length > 0) {
         latestSnapshot = data.items.sort((a: any, b: any) => 
           new Date(b.createTime).getTime() - new Date(a.createTime).getTime())[0];
+
+        // Enrich with per-reviewer action timestamps from Drive Activity API
+        if (latestSnapshot.reviewerResponses) {
+          const timestampMap = await fetchReviewerTimestamps(document.fileId, accessToken);
+          latestSnapshot.reviewerResponses = latestSnapshot.reviewerResponses.map((r: any) => ({
+            ...r,
+            actionTime: timestampMap[r.reviewer.emailAddress?.toLowerCase()] ?? null,
+          }));
+        }
       }
     }
 

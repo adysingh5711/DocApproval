@@ -20,6 +20,17 @@ const statusColorMap = {
   NO_RESPONSE: "secondary",
 } as const;
 
+const formatActionTime = (iso: string | null | undefined) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
 export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[], onRemind: (email: string) => void }) {
   return (
     <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
@@ -67,7 +78,7 @@ export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[],
               </TableCell>
               <TableCell>
                 <div className="text-sm text-slate-500">
-                  {r.actionTime || "—"}
+                  {formatActionTime(r.actionTime)}
                 </div>
               </TableCell>
               <TableCell className="text-right">

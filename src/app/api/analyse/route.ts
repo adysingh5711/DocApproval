@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import { env } from "@/env";
 import { authOptions } from "@/lib/auth";
+import { fetchReviewerTimestamps } from "../../../../convex/lib/fetchReviewerTimestamps";
 
 const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -102,6 +103,15 @@ export async function POST(req: Request) {
         latestApprovalSnapshot = approvalsData.items.sort(
           (a: any, b: any) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
         )[0];
+
+        // Enrich with per-reviewer action timestamps from Drive Activity API
+        if (latestApprovalSnapshot.reviewerResponses) {
+          const timestampMap = await fetchReviewerTimestamps(fileId, accessToken);
+          latestApprovalSnapshot.reviewerResponses = latestApprovalSnapshot.reviewerResponses.map((r: any) => ({
+            ...r,
+            actionTime: timestampMap[r.reviewer.emailAddress?.toLowerCase()] ?? null,
+          }));
+        }
       }
     } else {
       const errBody = await approvalsRes.json().catch(() => ({}));

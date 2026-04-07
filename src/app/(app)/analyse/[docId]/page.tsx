@@ -40,14 +40,16 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
       trackingText: trackingJob?.active 
         ? `Tracking: Every ${trackingJob.intervalValue} ${trackingJob.intervalUnit}` 
         : "",
-      reviewers: (snap?.reviewerResponses || []).map((r: any) => ({
-        name: r.reviewer?.displayName || "Unknown",
-        email: r.reviewer?.emailAddress || "",
-        response: r.response as "NO_RESPONSE" | "APPROVED" | "DECLINED",
-        actionTime: r.response !== "NO_RESPONSE" && snap?.modifyTime 
-          ? new Date(snap.modifyTime).toLocaleString("en-GB", { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) 
-          : undefined,
-      })),
+      reviewers: (snap?.reviewerResponses || []).map((r: any) => {
+        const response = r.response === "APPROVED" ? "APPROVED" : 
+                        r.response === "REJECTED" ? "DECLINED" : "NO_RESPONSE";
+        return {
+          name: r.reviewer?.displayName || "Unknown",
+          email: r.reviewer?.emailAddress || "",
+          response,
+          actionTime: r.actionTime || (response !== "NO_RESPONSE" ? snap?.modifyTime : undefined),
+        };
+      }),
       _id: document._id,
     };
   }, [document, trackingJob]);

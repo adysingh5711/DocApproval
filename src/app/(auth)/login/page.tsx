@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const handleLogin = () => {
-    // Mock login -> redirect to dashboard
-    router.push("/dashboard");
+    signIn("google", { callbackUrl: "/dashboard" });
   };
 
   return (

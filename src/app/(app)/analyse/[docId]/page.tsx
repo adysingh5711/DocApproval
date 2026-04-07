@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ReviewersTable } from "@/components/analyse/ReviewersTable";
@@ -30,7 +30,8 @@ const statusColorMap = {
   CANCELLED: "secondary",
 } as const;
 
-export default function DocumentStatusPage({ params }: { params: { docId: string } }) {
+export default function DocumentStatusPage({ params }: { params: Promise<{ docId: string }> }) {
+  const { docId } = use(params);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [targetEmail, setTargetEmail] = useState("");
   const [trackingPanelOpen, setTrackingPanelOpen] = useState(false);
@@ -58,7 +59,7 @@ export default function DocumentStatusPage({ params }: { params: { docId: string
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 line-clamp-1">{mockApprovalData.title}</h1>
             <a 
-              href={`https://docs.google.com/document/d/${params.docId}`}
+              href={`https://docs.google.com/document/d/${docId}`}
               target="_blank" 
               rel="noreferrer"
               className="text-slate-400 hover:text-indigo-600 transition-colors"

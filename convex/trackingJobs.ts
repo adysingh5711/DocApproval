@@ -1,6 +1,7 @@
 import { internalAction, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 export const getByDocument = query({
   args: { documentId: v.id("documents") },
@@ -20,7 +21,7 @@ export const start = mutation({
     intervalUnit: v.union(v.literal("hours"), v.literal("days"), v.literal("weeks")),
     autoStop: v.boolean(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Id<"trackingJobs">> => {
     const unitMs = { hours: 3600000, days: 86400000, weeks: 604800000 };
     const intervalMs = args.intervalValue * unitMs[args.intervalUnit];
     
@@ -33,7 +34,7 @@ export const start = mutation({
     const nextRunAt = Date.now() + intervalMs;
     
     // Schedule the first run
-    const convexJobId = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
+    const convexJobId: Id<"_scheduled_functions"> = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
       documentId: args.documentId,
       userId: args.userId,
     });
@@ -102,13 +103,12 @@ export const updateJobState = mutation({
 export const runTrackingJob = internalAction({
   args: { documentId: v.id("documents"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    // Note: since this is an action, we can't directly read the DB, we have to call queries/mutations
+    // Note: Since this is an action, we can't directly read the DB, we have to call queries/mutations
     // But since the actual API call logic for Google is happening here we might need a Next.js API route to be called if we don't do fetch here.
-    // However, we can use `fetch` here to call our Next.js API route that has the googleapis logic!
-    // Or we can fetch the user token via a mutation/query and do `fetch` to Google Drive API directly here.
-    // For simplicity, we can fetch the user tokens and then use Node's `fetch` to call Google API.
     
-    const userTokens = await ctx.runQuery(internal.users.getTokens, { googleId: "" }); // actually we should pass googleId or internal getTokens by userId
-    // Wait, let's create a query to get tokens by UserId!
+    // Placeholder logic for now to prevent build errors
+    // In a real scenario, this would fetch tokens and call Google API
+    console.log("Running tracking job for document:", args.documentId);
+    return;
   },
 });

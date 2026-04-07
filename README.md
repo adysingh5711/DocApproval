@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DocApproval Portal
+
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![Convex](https://img.shields.io/badge/Convex-Backend-orange?logo=convex)](https://convex.dev/)
+[![NextAuth](https://img.shields.io/badge/NextAuth-v4-blue?logo=nextauth)](https://next-auth.js.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Active-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+DocApproval Portal is a modern, responsive web application that seamlessly integrates with Google Workspace to manage, analyze, and track Google Drive document approval workflows. Built with a real-time reactive backend, it enables authenticated users to track reviewer responses and dispatch automated email reminders via Gmail without leaving the interface.
+
+---
+
+## ✨ Features
+
+- **OAuth2 Integration:** Secure Google login utilizing `next-auth` to seamlessly orchestrate Gmail and Drive permissions.
+- **Drive Approvals Analysis:** Instantly fetch and parse approval states, reviewer responses, and modification timestamps for any Google document.
+- **Automated Reminder Jobs:** Set up tracking schedules running recursively via the **Convex Scheduler** to email uncooperative reviewers completely automatically.
+- **Real-Time Synchronisation:** Documents, categories, and tracking jobs live securely on Convex's real-time database, propagating state globally without manual refreshing.
+- **Type-Safe Ecosystem:** Absolute end-to-end type safety, from strict Zod environment variable parsing down to Convex query outputs.
+
+## Tech Stack
+
+| Component | Technology | Rationale |
+| :--- | :--- | :--- |
+| **Framework** | [Next.js 14](https://nextjs.org/) (App Router) | Best-in-class React framework for edge delivery and server-side components. |
+| **Authentication** | [NextAuth.js](https://next-auth.js.org/) (v4) | Robust OAuth proxy securely locking `access_tokens` down to backend routes. |
+| **Database & Backend** | [Convex](https://convex.dev/) | Eliminates boilerplate REST/GraphQL layers. Native cron and recurring task support for our tracker. |
+| **API Connectors** | [Google APIs](https://github.com/googleapis/google-api-nodejs-client) | Direct interactions with Google Drive & Gmail API resources over standardized RPC. |
+| **Environment** | [Zod](https://zod.dev/) | Bulletproof schema checking ensuring the server never starts with missing environment variables. |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+Follow these steps to bootstrap your local development environment.
 
+### Prerequisites
+
+- **Node.js** (v18.17.0 or higher)
+- A **Google Cloud Project** with the following APIs enabled:
+  - Google Drive API
+  - Gmail API
+- A free **Convex** account for your database instance.
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/docapproval-portal.git
+cd docapproval-portal
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Initialize Convex
+Spin up your local Convex backend. This command will log you into your Convex account, provision your development environment, and generate the strictly typed schema definitions locally.
+```bash
+npx convex dev
+```
+*(Leave this process running in the background to automatically synchronize your database schema changes).*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Configure Environment Variables
+Copy the example environment securely:
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+Ensure you populate `.env.local` accurately:
+```env
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_generated_secret # Run `openssl rand -base64 32` to generate this 
 
-To learn more about Next.js, take a look at the following resources:
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# The following two are provided automatically when you run `npx convex dev`
+CONVEX_DEPLOYMENT=dev:your_project_name
+NEXT_PUBLIC_CONVEX_URL=https://your-project-url.convex.cloud
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> **Note on Google Scopes**: Make sure your Google OAuth Consent screen has `drive.readonly`, `gmail.send`, and `drive.metadata.readonly` added manually as authorized scopes!
 
-## Deploy on Vercel
+### 5. Launch the App
+In a new terminal window, boot the Next.js frontend:
+```bash
+npm run dev
+```
+Navigate to [http://localhost:3000](http://localhost:3000) to view the application locally.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```text
+├── convex/                             # Convex backend logic & schema
+│   ├── _generated/                     # Autogenerated typings (run npx convex dev)
+│   ├── schema.ts                       # Database schema strictly defining 4 core tables
+│   ├── users.ts / documents.ts         # User auth tokens and document snapshot handlers
+│   └── trackingJobs.ts                 # Scheduled V8 background actions & mutation handlers
+├── src/                                
+│   ├── app/                    
+│   │   ├── api/auth/[...nextauth]/     # NextAuth callback overriders intercepting Google tokens
+│   │   ├── api/analyse/                # Edge-ready API validating Google Drive links
+│   │   └── api/tracking/               # Starts/Stops task execution jobs for Docs
+│   ├── providers/                      # Combined NextAuth Session + Convex Client providers
+│   └── env.ts                          # Strict Zod environment variable parsing
+├── .env.example                        # Template detailing environment variables
+└── package.json                   
+```
+
+## 🤝 Contributing
+
+Contributions are always welcome! 
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

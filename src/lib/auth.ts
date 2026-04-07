@@ -48,7 +48,14 @@ export const authOptions: NextAuthOptions = {
           prompt: "consent",
           access_type: "offline",
           response_type: "code",
-          scope: "openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.activity https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts.readonly",
+          scope: [
+            "openid email profile",
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/drive.activity",
+            "https://www.googleapis.com/auth/contacts.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/chat.spaces",
+          ].join(" "),
         },
       },
     }),
@@ -91,7 +98,6 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
-      (session as any).accessToken = token.accessToken;
       (session as any).tokenError = (token as any).error;
       return session;
     },

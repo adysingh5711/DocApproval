@@ -14,7 +14,8 @@ import {
   Video,
   Calendar,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,6 +26,8 @@ interface Person {
   email: string;
   jobTitle: string | null;
   company: string | null;
+  contactsUrl: string | null;
+  chatDmUrl: string | null;
 }
 
 const profileCache: Record<string, Person> = {};
@@ -83,6 +86,7 @@ export function GoogleProfileHover({
   const [profile, setProfile] = useState<Person | null>(store.getProfile(email));
   const [active, setActive] = useState(store.getActiveEmail() === email);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const fetchPromise = useRef<Promise<void> | null>(null);
@@ -109,12 +113,14 @@ export function GoogleProfileHover({
           email: email,
           photoUrl: null,
           jobTitle: null,
-          company: null
+          company: null,
+          contactsUrl: null,
+          chatDmUrl: null
         };
         store.setProfile(email, person);
       } catch (err) {
         console.error("Error fetching profile:", err);
-        store.setProfile(email, { name, email, photoUrl: null, jobTitle: null, company: null });
+        store.setProfile(email, { name, email, photoUrl: null, jobTitle: null, company: null, contactsUrl: null, chatDmUrl: null });
       } finally {
         setLoading(false);
         fetchPromise.current = null;
@@ -144,6 +150,13 @@ export function GoogleProfileHover({
         store.setActiveEmail(null);
       }
     }, 300);
+  };
+
+  const copyEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(email);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -198,13 +211,12 @@ export function GoogleProfileHover({
                       {profile.email}
                     </span>
                     <button
-                      className="p-1 text-[#5f6368] hover:bg-slate-100 rounded-full transition-colors shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(profile.email);
-                      }}
+                      className="p-1 text-[#5f6368] hover:bg-slate-100 rounded-full transition-colors shrink-0 flex items-center gap-1"
+                      onClick={copyEmail}
+                      title="Copy email"
                     >
-                      <Copy size={14} />
+                      {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                      {copied && <span className="text-[10px] text-green-600 font-medium">Copied!</span>}
                     </button>
                   </div>
                   {(profile.jobTitle || profile.company) && (
@@ -225,41 +237,74 @@ export function GoogleProfileHover({
 
               {/* Action Buttons Row */}
               <div className="flex items-center gap-2 p-2 px-3 border-t border-[#dadce0] bg-slate-50/30">
+                
+                {/* Mail */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
-                  onClick={() => window.open(`mailto:${email}`)}
+                  title="Send email"
+                  onClick={() => window.open(`mailto:${email}`, "_blank")}
                 >
                   <Mail size={18} />
                 </Button>
+
+                {/* Chat */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
+                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5 disabled:opacity-40"
+                  title="Open Google Chat DM"
+                  disabled={!profile.chatDmUrl}
+                  onClick={() => profile.chatDmUrl && window.open(profile.chatDmUrl, "_blank")}
                 >
                   <MessageSquare size={18} />
                 </Button>
+
+                {/* Meet */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
+                  title="Start Google Meet call"
+                  onClick={() =>
+                    window.open(
+                      `https://meet.google.com/new?calleeId=${encodeURIComponent(email)}&authuser=0`,
+                      "_blank"
+                    )
+                  }
                 >
                   <Video size={18} />
                 </Button>
+
+                {/* Calendar */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
+                  title="Schedule calendar event"
+                  onClick={() =>
+                    window.open(
+                      `https://calendar.google.com/calendar/r/eventedit?add=${encodeURIComponent(email)}&authuser=0`,
+                      "_blank"
+                    )
+                  }
                 >
                   <Calendar size={18} />
                 </Button>
+
+                {/* Open Profile */}
                 <div className="ml-auto">
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-8 text-[13px] font-medium text-indigo-600 hover:bg-indigo-50 px-2"
-                    onClick={() => window.open(`https://contacts.google.com/search/${encodeURIComponent(email)}`)}
+                    onClick={() =>
+                      window.open(
+                        profile.contactsUrl ?? `https://contacts.google.com/search/${encodeURIComponent(email)}`,
+                        "_blank"
+                      )
+                    }
                   >
                     Open profile
                     <ExternalLink size={14} className="ml-1.5" />

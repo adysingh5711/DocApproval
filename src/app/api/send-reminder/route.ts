@@ -1,15 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !(session as any).accessToken || !session.user?.email) {
+    if (!session || !session.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const accessToken = (session as any).accessToken;
+    // Get access token from JWT
+    const token = await getToken({ req });
+    const accessToken = token?.accessToken as string | undefined;
+
+    if (!accessToken) {
+      return NextResponse.json({ error: "No access token. Please sign out and sign back in." }, { status: 401 });
+    }
+
     const { to, subject, body } = await req.json();
 
     if (!to || !subject || !body) {

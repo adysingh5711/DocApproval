@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { getToken } from "next-auth/jwt";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import { env } from "@/env";
@@ -8,7 +9,7 @@ import { fetchReviewerTimestamps } from "../../../../convex/lib/fetchReviewerTim
 
 const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate user
     const session = await getServerSession(authOptions);
@@ -25,7 +26,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const accessToken = (session as any).accessToken;
+    // Get access token from JWT
+    const token = await getToken({ req });
+    const accessToken = token?.accessToken as string | undefined;
+    
     if (!accessToken) {
       return NextResponse.json({ error: "No access token. Please sign out and sign back in." }, { status: 401 });
     }

@@ -1,11 +1,12 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { env } from "@/env";
 
 const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
           prompt: "consent",
@@ -24,11 +25,11 @@ const authOptions: NextAuthOptions = {
         token.refreshToken = account.refresh_token;
         token.tokenExpiry = account.expires_at ? account.expires_at * 1000 : undefined;
         
-        // At this point we would also need to save to Convex.
-        // We can do an API call to a specific Convex endpoint or just perform it directly
-        // via the generic Next.js fetch. Since we can't easily run ConvexClient here synchronously
+        // at this point we would also need to save to convex.
+        // we can do an api call to a specific convex endpoint or just perform it directly
+        // via the generic next.js fetch. Since we can't easily run ConvexClient here synchronously
         // inside the edge-friendly NextAuth callback without `convex` node client setup:
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+        const convexUrl = env.NEXT_PUBLIC_CONVEX_URL;
         if (convexUrl) {
           // We can use the Convex HTTP API or fetch a mutation
           // Instead, since NextAuth calls this server-side, it's safe to use Node's fetch
@@ -45,7 +46,7 @@ const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account, profile }) {
       if (account && account.provider === "google") {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace("https://", "https://");
+        const convexUrl = env.NEXT_PUBLIC_CONVEX_URL.replace("https://", "https://");
         if (convexUrl) {
           try {
             // We can't easily use the generated client here directly if we don't have it imported.
@@ -54,7 +55,7 @@ const authOptions: NextAuthOptions = {
             const { ConvexHttpClient } = require("convex/browser");
             const { api } = require("../../../../../convex/_generated/api");
             
-            const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+            const client = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
             await client.mutation(api.users.upsertUserTokens, {
               email: user.email || "",
               name: user.name || "",

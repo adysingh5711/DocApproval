@@ -1,6 +1,17 @@
 {
-  "name": "tmp-app",
+  "name": "docapproval",
   "version": "0.1.0",
+  "description": "A modern web application to manage, analyze, and track Google Drive document approval workflows.",
+  "author": "Aditya Singh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adysingh5711/DocApproval.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adysingh5711/DocApproval/issues"
+  },
+  "homepage": "https://github.com/adysingh5711/DocApproval#readme",
   "private": true,
   "scripts": {
     "dev": "next dev",

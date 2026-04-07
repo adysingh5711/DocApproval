@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react";
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
 
 import { cn } from "@/lib/utils"
@@ -8,10 +9,19 @@ function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
   return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />
 }
 
-function HoverCardTrigger({ ...props }: PreviewCardPrimitive.Trigger.Props) {
-  return (
-    <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
-  )
+function HoverCardTrigger({ asChild, children, ...props }: PreviewCardPrimitive.Trigger.Props) {
+  if (asChild && React.isValidElement(children)) {
+    // If asChild is true, clone the child element and pass all other props to it.
+    // This effectively makes the child element the trigger and applies the necessary event handlers.
+    // Cast children to React.ReactElement to satisfy TypeScript compiler.
+    return React.cloneElement(children as React.ReactElement, props);
+  }
+
+  // If asChild is false or children is not a valid element, render the default primitive trigger.
+  // We explicitly exclude `asChild` from the spread props to avoid passing it to a potential DOM element
+  // that doesn't support it, as indicated by the error message.
+  const { asChild: _, ...restProps } = props;
+  return <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...restProps} />;
 }
 
 function HoverCardContent({

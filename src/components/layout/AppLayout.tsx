@@ -4,16 +4,29 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Search, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react"; // Import useState
+
+// Import Button and Dialog components
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function NavItem({ icon, label, href, active }: { icon: React.ReactNode, label: string, href: string, active?: boolean }) {
   return (
-    <Link 
-      href={href} 
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-        active 
-          ? "bg-indigo-50 text-indigo-600 font-medium" 
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${active
+          ? "bg-indigo-50 text-indigo-600 font-medium"
           : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 font-medium"
-      }`}
+        }`}
     >
       {icon}
       <span className="text-sm">{label}</span>
@@ -23,6 +36,15 @@ function NavItem({ icon, label, href, active }: { icon: React.ReactNode, label: 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false); // State for dialog
+
+  const handleLogoutClick = () => {
+    setIsLogoutDialogOpen(true); // Open the dialog
+  };
+
+  const confirmLogout = () => {
+    window.location.href = "/login"; // Perform logout redirection
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50/50">
@@ -31,31 +53,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
           <span className="font-bold text-xl tracking-tight text-slate-900">DocApproval</span>
         </div>
-        
+
         <nav className="flex-1 space-y-1">
-          <NavItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
-            href="/dashboard" 
-            active={pathname === "/dashboard"} 
+          <NavItem
+            icon={<LayoutDashboard size={20} />}
+            label="Dashboard"
+            href="/dashboard"
+            active={pathname === "/dashboard"}
           />
-          <NavItem 
-            icon={<Search size={20} />} 
-            label="Analyse" 
-            href="/analyse" 
-            active={pathname.startsWith("/analyse")} 
+          <NavItem
+            icon={<Search size={20} />}
+            label="Analyse"
+            href="/analyse"
+            active={pathname.startsWith("/analyse")}
           />
-          <NavItem 
-            icon={<Settings size={20} />} 
-            label="Settings" 
-            href="/settings" 
-            active={pathname.startsWith("/settings")} 
+          <NavItem
+            icon={<Settings size={20} />}
+            label="Settings"
+            href="/settings"
+            active={pathname.startsWith("/settings")}
           />
         </nav>
 
         <div className="pt-4 border-t">
-          <button 
-            onClick={() => window.location.href = "/login"}
+          <button
+            onClick={handleLogoutClick} // Use handler to open dialog
             className="flex items-center gap-3 text-slate-500 hover:text-rose-600 transition-colors px-3 py-2 w-full"
           >
             <LogOut size={20} />
@@ -75,9 +97,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Link href="/settings" className={`p-2 rounded-full ${pathname.startsWith("/settings") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
           <Settings size={24} />
         </Link>
+        {/* Logout button for mobile */}
+        <button
+          onClick={handleLogoutClick} // Use handler to open dialog
+          className={`p-2 rounded-full ${pathname.startsWith("/login") ? "text-rose-600 bg-rose-50" : "text-slate-500 hover:text-rose-600"}`}
+        >
+          <LogOut size={24} />
+        </button>
       </nav>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">{children}</main>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to log out?</DialogTitle>
+            <DialogDescription>
+              This will end your current session. You will be redirected to the login page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:items-center">
+            <DialogClose>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={confirmLogout}>
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -58,9 +58,12 @@ export function ReviewerAvatar({ email, name, className }: { email: string, name
   const [profile, setProfile] = useState<Person | null>(store.getProfile(email));
 
   useEffect(() => {
-    return store.subscribe(() => {
+    const unsubscribe = store.subscribe(() => {
       setProfile(store.getProfile(email));
     });
+    return () => {
+      unsubscribe();
+    };
   }, [email]);
 
   return (
@@ -106,7 +109,9 @@ export function GoogleProfileHover({
       setProfile(store.getProfile(email));
       setActive(store.getActiveEmail() === email);
     });
-    return unsub;
+    return () => {
+      unsub();
+    };
   }, [email]);
 
   const fetchProfile = async () => {
@@ -180,11 +185,10 @@ export function GoogleProfileHover({
   return (
     <HoverCard open={active} onOpenChange={(open) => !open && store.setActiveEmail(null)}>
       <HoverCardTrigger
-        asChild
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {children}
+        <div className="inline-block">{children}</div>
       </HoverCardTrigger>
 
       <HoverCardContent

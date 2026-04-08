@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
           const enrichedResponses = await Promise.all(
             latestApprovalSnapshot.reviewerResponses.map(async (r: any) => {
               const email = r.reviewer.emailAddress;
-              const profile = await fetchGoogleProfile(email, accessToken, session.user.email);
+              const profile = await fetchGoogleProfile(email, accessToken, session.user?.email!);
               
               return {
                 ...r,

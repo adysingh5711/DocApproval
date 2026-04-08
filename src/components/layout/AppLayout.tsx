@@ -46,6 +46,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     window.location.href = "/login"; // Perform logout redirection
   };
 
+  // Main layout structure with sidebar and mobile nav
   return (
     <div className="flex h-screen bg-slate-50/50 overflow-hidden">
       <aside className="w-64 border-r bg-white p-6 flex flex-col gap-8 hidden md:flex shrink-0">

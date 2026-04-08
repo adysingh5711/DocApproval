@@ -48,6 +48,7 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
           email: r.reviewer?.emailAddress || "",
           response,
           actionTime: r.actionTime || (response !== "NO_RESPONSE" ? snap?.modifyTime : undefined),
+          profile: r.profile ?? null,
         };
       }),
       _id: document._id,
@@ -91,6 +92,7 @@ export default function DocumentStatusPage({ params }: { params: Promise<{ docId
     openEmailModal(emails);
   };
 
+  // Loading state with centered spinner
   if (document === undefined || trackingJob === undefined) {
     return (
       <div className="flex justify-center items-center py-24">

@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import { env } from "@/env";
 import { authOptions } from "@/lib/auth";
 import { fetchReviewerTimestamps } from "../../../../convex/lib/fetchReviewerTimestamps";
+import { fetchGoogleProfile } from "@/lib/google-people";
 
 const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL);
 
@@ -108,13 +109,27 @@ export async function POST(req: NextRequest) {
           (a: any, b: any) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
         )[0];
 
-        // Enrich with per-reviewer action timestamps from Drive Activity API
+        // Enrich with per-reviewer action timestamps and profiles
         if (latestApprovalSnapshot.reviewerResponses) {
+          console.log(`[analyse] Enriching ${latestApprovalSnapshot.reviewerResponses.length} reviewers...`);
+          
           const timestampMap = await fetchReviewerTimestamps(fileId, accessToken);
-          latestApprovalSnapshot.reviewerResponses = latestApprovalSnapshot.reviewerResponses.map((r: any) => ({
-            ...r,
-            actionTime: timestampMap[r.reviewer.emailAddress?.toLowerCase()] ?? null,
-          }));
+          
+          // Fetch profiles in parallel
+          const enrichedResponses = await Promise.all(
+            latestApprovalSnapshot.reviewerResponses.map(async (r: any) => {
+              const email = r.reviewer.emailAddress;
+              const profile = await fetchGoogleProfile(email, accessToken, session.user.email);
+              
+              return {
+                ...r,
+                actionTime: timestampMap[email?.toLowerCase()] ?? null,
+                profile: profile ?? null, // Store pre-fetched profile
+              };
+            })
+          );
+          
+          latestApprovalSnapshot.reviewerResponses = enrichedResponses;
         }
       }
     } else {

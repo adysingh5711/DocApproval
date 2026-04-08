@@ -11,6 +11,7 @@ interface Reviewer {
   email: string;
   response: "APPROVED" | "PENDING" | "DECLINED" | "NO_RESPONSE";
   actionTime?: string;
+  profile?: any;
 }
 
 const statusColorMap = {
@@ -53,7 +54,7 @@ export function ReviewersTable({ reviewers, onRemind }: { reviewers: Reviewer[],
               className="group border-b last:border-0 hover:bg-slate-50/50 transition-colors"
             >
               <TableCell className="py-4">
-                <GoogleProfileHover email={r.email} name={r.name}>
+                <GoogleProfileHover email={r.email} name={r.name} initialProfile={r.profile}>
                   <div className="flex items-start gap-2 cursor-pointer group/hover w-fit">
                     <ReviewerAvatar
                       email={r.email}

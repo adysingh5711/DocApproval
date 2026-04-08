@@ -77,30 +77,41 @@ export function ReviewerAvatar({ email, name, className }: { email: string, name
 export function GoogleProfileHover({
   email,
   name,
-  children
+  children,
+  initialProfile
 }: {
   email: string;
   name: string;
   children: React.ReactNode;
+  initialProfile?: Person | null;
 }) {
-  const [profile, setProfile] = useState<Person | null>(store.getProfile(email));
+  const [profile, setProfile] = useState<Person | null>(store.getProfile(email) || initialProfile || null);
   const [active, setActive] = useState(store.getActiveEmail() === email);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const fetchPromise = useRef<Promise<void> | null>(null);
+  const isOver = useRef(false);
+
+  // Prefill store if initialProfile is provided
+  useEffect(() => {
+    if (initialProfile && !store.getProfile(email)) {
+      store.setProfile(email, initialProfile);
+    }
+  }, [email, initialProfile]);
 
   useEffect(() => {
-    return store.subscribe(() => {
+    const unsub = store.subscribe(() => {
       setProfile(store.getProfile(email));
       setActive(store.getActiveEmail() === email);
     });
+    return unsub;
   }, [email]);
 
   const fetchProfile = async () => {
     if (fetchPromise.current) return fetchPromise.current;
-    if (store.getProfile(email)) return;
+    if (store.getProfile(email)) return Promise.resolve();
 
     setLoading(true);
     fetchPromise.current = (async () => {
@@ -130,21 +141,26 @@ export function GoogleProfileHover({
   };
 
   const handleMouseEnter = () => {
+    isOver.current = true;
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
 
     const show = () => {
-      // Ensure only this one is active
-      store.setActiveEmail(email);
+      if (isOver.current) {
+        store.setActiveEmail(email);
+      }
     };
 
     if (!profile && !loading) {
       fetchProfile().then(show);
     } else if (profile) {
-      show();
+      hoverTimeout.current = setTimeout(show, 150);
     }
   };
 
   const handleMouseLeave = () => {
+    isOver.current = false;
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    
     hoverTimeout.current = setTimeout(() => {
       if (store.getActiveEmail() === email) {
         store.setActiveEmail(null);

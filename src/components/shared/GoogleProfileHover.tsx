@@ -94,9 +94,9 @@ export function GoogleProfileHover({
   const fetchPromise = useRef<Promise<void> | null>(null);
   const isOver = useRef(false);
 
-  // Prefill store if initialProfile is provided
+  // Update store when initialProfile arrives or changes
   useEffect(() => {
-    if (initialProfile && !store.getProfile(email)) {
+    if (initialProfile) {
       store.setProfile(email, initialProfile);
     }
   }, [email, initialProfile]);

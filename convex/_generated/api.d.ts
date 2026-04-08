@@ -10,6 +10,7 @@
 
 import type * as categories from "../categories.js";
 import type * as documents from "../documents.js";
+import type * as lib_fetchReviewerTimestamps from "../lib/fetchReviewerTimestamps.js";
 import type * as trackingJobs from "../trackingJobs.js";
 import type * as users from "../users.js";
 
@@ -22,6 +23,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   documents: typeof documents;
+  "lib/fetchReviewerTimestamps": typeof lib_fetchReviewerTimestamps;
   trackingJobs: typeof trackingJobs;
   users: typeof users;
 }>;

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     ...seoConfig.openGraph,
     images: [
       {
-        url: "/og-image.png",
+        url: "/images/og-image.png",
         width: 1200,
         height: 630,
         alt: "DocApproval",

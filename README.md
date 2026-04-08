@@ -14,7 +14,9 @@ DocApproval Portal is a modern, responsive web application that seamlessly integ
 
 - **OAuth2 Integration:** Secure Google login utilizing `next-auth` to seamlessly orchestrate Gmail and Drive permissions.
 - **Drive Approvals Analysis:** Instantly fetch and parse approval states, reviewer responses, and modification timestamps for any Google document.
-- **Automated Reminder Jobs:** Set up tracking schedules running recursively via the **Convex Scheduler** to email uncooperative reviewers completely automatically.
+- **Category Organization:** Organize and group documents into custom categories for streamlined management and analysis.
+- **Automated Reminder Jobs:** Set up tracking schedules running recursively via the **Convex Scheduler** to email uncooperative reviewers automatically.
+- **Email Notifications:** Integrated interface for sending personalized email reminders directly through Gmail for pending approvals.
 - **Real-Time Synchronisation:** Documents, categories, and tracking jobs live securely on Convex's real-time database, propagating state globally without manual refreshing.
 - **Type-Safe Ecosystem:** Absolute end-to-end type safety, from strict Zod environment variable parsing down to Convex query outputs.
 

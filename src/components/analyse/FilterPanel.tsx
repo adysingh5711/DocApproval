@@ -52,7 +52,7 @@ export function FilterPanel({ categories, subCategories, onApply, onReset }: Fil
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button
           variant={hasActiveFilters ? "default" : "outline"}
           className={`gap-2 ${hasActiveFilters ? "bg-indigo-600 text-white hover:bg-indigo-700" : ""}`}

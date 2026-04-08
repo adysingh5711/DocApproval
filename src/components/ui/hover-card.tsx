@@ -9,32 +9,8 @@ function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
   return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />
 }
 
-function HoverCardTrigger({ asChild, children, ...props }: PreviewCardPrimitive.Trigger.Props) {
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
-      ...props,
-      onMouseEnter: (e: React.MouseEvent) => {
-        child.props.onMouseEnter?.(e);
-        (props as any).onMouseEnter?.(e);
-      },
-      onMouseLeave: (e: React.MouseEvent) => {
-        child.props.onMouseLeave?.(e);
-        (props as any).onMouseLeave?.(e);
-      },
-      onFocus: (e: React.FocusEvent) => {
-        child.props.onFocus?.(e);
-        (props as any).onFocus?.(e);
-      },
-      onBlur: (e: React.FocusEvent) => {
-        child.props.onBlur?.(e);
-        (props as any).onBlur?.(e);
-      },
-    });
-  }
-
-  const { asChild: _, ...restProps } = props;
-  return <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...restProps} />;
+function HoverCardTrigger({ ...props }: PreviewCardPrimitive.Trigger.Props) {
+  return <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />;
 }
 
 function HoverCardContent({

@@ -185,30 +185,26 @@ export function GoogleProfileHover({
         {children}
       </HoverCardTrigger>
 
-      <AnimatePresence>
-        {active && profile && (
-          <HoverCardContent
-            side="bottom"
-            align="start"
-            sideOffset={4}
-            alignOffset={0}
-            className="p-0 border-none bg-transparent shadow-none z-[100] w-fit"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.218 }}
-              style={{
-                boxShadow: "0 1px 2px 0 rgba(60,64,67,0.30), 0 1px 3px 1px rgba(60,64,67,0.15)",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                width: "320px",
-                overflow: "hidden"
-              }}
-            >
+      <HoverCardContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        alignOffset={0}
+        className="p-0 border-none bg-transparent shadow-none z-[100] w-fit"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div
+          style={{
+            boxShadow: "0 1px 2px 0 rgba(60,64,67,0.30), 0 1px 3px 1px rgba(60,64,67,0.15)",
+            borderRadius: "8px",
+            backgroundColor: "#fff",
+            width: "320px",
+            overflow: "hidden"
+          }}
+        >
+          {profile ? (
+            <>
               {/* Main Content Area (Avatar + Info) */}
               <div className="flex p-4 pb-3">
                 <Avatar className="h-16 w-16 mr-4 shrink-0">
@@ -327,10 +323,16 @@ export function GoogleProfileHover({
                   </Button>
                 </div>
               </div>
-            </motion.div>
-          </HoverCardContent>
-        )}
-      </AnimatePresence>
+            </>
+          ) : (
+            <div className="p-8 flex flex-col items-center justify-center space-y-3">
+              <div className="h-12 w-12 rounded-full bg-slate-100 animate-pulse" />
+              <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
+              <div className="h-3 w-48 bg-slate-50 rounded animate-pulse" />
+            </div>
+          )}
+        </div>
+      </HoverCardContent>
     </HoverCard>
   );
 }

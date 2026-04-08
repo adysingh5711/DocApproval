@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, FileText, PlusCircle, LayoutGrid } from "lucide-react";
+import { Search, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterPanel } from "@/components/analyse/FilterPanel";
 import { DocCard, Doc } from "@/components/dashboard/DocCard";
 import { AnimatePresence, motion } from "framer-motion";
 import Fuse from "fuse.js";
@@ -20,13 +20,17 @@ export default function DashboardPage() {
   const rawDocs = useQuery(api.documents.getByUserWithTracking, user?._id ? { userId: user._id } : "skip");
 
   const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedFilters, setSelectedFilters] = useState({
+    statuses: [] as string[],
+    categories: [] as string[],
+    subCategories: [] as string[],
+  });
 
   const docsMap: Doc[] = useMemo(() => {
     if (!rawDocs) return [];
     return rawDocs.map((d: any) => ({
       id: d.fileId,
-      _id: d._id, // Pass Convex internal ID for deletion
+      _id: d._id,
       title: d.title,
       status: d.latestApprovalSnapshot?.status || "PENDING",
       category: d.category || "Uncategorized",
@@ -37,6 +41,7 @@ export default function DashboardPage() {
   }, [rawDocs]);
 
   const categories = useMemo(() => Array.from(new Set(docsMap.map((d) => d.category))), [docsMap]);
+  const subCategories = useMemo(() => Array.from(new Set(docsMap.map((d) => d.subcategory))), [docsMap]);
 
   const fuse = useMemo(() => new Fuse(docsMap, { keys: ["title", "category", "subcategory"], threshold: 0.3 }), [docsMap]);
 
@@ -45,11 +50,17 @@ export default function DashboardPage() {
     if (query) {
       result = fuse.search(query).map(res => res.item);
     }
-    if (categoryFilter !== "all") {
-      result = result.filter(d => d.category === categoryFilter);
+    if (selectedFilters.statuses.length > 0) {
+      result = result.filter(d => selectedFilters.statuses.includes(d.status));
+    }
+    if (selectedFilters.categories.length > 0) {
+      result = result.filter(d => selectedFilters.categories.includes(d.category));
+    }
+    if (selectedFilters.subCategories.length > 0) {
+      result = result.filter(d => selectedFilters.subCategories.includes(d.subcategory));
     }
     return result;
-  }, [query, categoryFilter, fuse, docsMap]);
+  }, [query, selectedFilters, fuse, docsMap]);
 
   if (rawDocs === undefined) {
     return (
@@ -77,7 +88,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border">
+      <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
           <Input 
@@ -87,17 +98,12 @@ export default function DashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div className="w-full md:w-48">
-          <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val || "all")}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterPanel 
+          categories={categories.map(c => ({ id: c, name: c }))}
+          subCategories={subCategories.map(s => ({ id: s, name: s }))}
+          onApply={(filters) => setSelectedFilters(filters)}
+          onReset={() => setSelectedFilters({ statuses: [], categories: [], subCategories: [] })}
+        />
       </div>
 
       {isTrulyEmpty ? (
@@ -141,7 +147,7 @@ export default function DashboardPage() {
                    <p className="font-medium text-slate-900">No documents found</p>
                    <p className="text-sm">Try adjusting your search query or filters.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => { setQuery(""); setCategoryFilter("all"); }}>
+                <Button variant="outline" size="sm" onClick={() => { setQuery(""); setSelectedFilters({ statuses: [], categories: [], subCategories: [] }); }}>
                    Clear Filters
                 </Button>
               </div>

@@ -116,7 +116,9 @@ export function GoogleProfileHover({
     setLoading(true);
     fetchPromise.current = (async () => {
       try {
-        const res = await fetch(`/api/user/profile?email=${encodeURIComponent(email)}`);
+        const res = await fetch(`/api/user/profile?email=${encodeURIComponent(email)}&t=${Date.now()}`, {
+          cache: 'no-store'
+        });
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         const person = data.person || {

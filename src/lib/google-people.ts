@@ -119,6 +119,7 @@ export async function fetchGoogleProfile(
 
     // 5. Chat DM space setup
     let chatDmUrl: string | null = null;
+    
     if (isNumeric) {
       try {
         const chatRes = await fetch("https://chat.googleapis.com/v1/spaces:setup", {
@@ -129,7 +130,12 @@ export async function fetchGoogleProfile(
           },
           body: JSON.stringify({
             space: { spaceType: "DIRECT_MESSAGE" },
-            memberships: [{ member: { name: `users/${numericId}`, type: "HUMAN" } }],
+            memberships: [{ 
+              member: { 
+                name: `users/${numericId}`, 
+                type: "HUMAN" 
+              } 
+            }],
           }),
         });
         
@@ -141,7 +147,7 @@ export async function fetchGoogleProfile(
           }
         }
       } catch (e) {
-        console.warn("[google-people] Chat DM resolve failed:", e);
+        // Silently fail chat DM resolve
       }
     }
 

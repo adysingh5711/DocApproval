@@ -187,6 +187,19 @@ export const runTrackingJob = internalAction({
       latestApprovalSnapshot: latestSnapshot,
     });
 
+    // After upsertDocument, check autoStop
+    if (job.autoStop) {
+      const updatedDoc = await ctx.runQuery(api.documents.get, { documentId: args.documentId });
+      const terminalStatuses = ["APPROVED", "DECLINED", "CANCELLED"];
+      if (updatedDoc && terminalStatuses.includes(updatedDoc.latestApprovalSnapshot?.status ?? "")) {
+        await ctx.runMutation(api.trackingJobs.updateJobState, {
+          jobId: job._id,
+          updates: { active: false, convexJobId: undefined },
+        });
+        return;
+      }
+    }
+
     // 5. Schedule the next run
     const nextRunAt = Date.now() + job.intervalMs;
     const convexJobId = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {

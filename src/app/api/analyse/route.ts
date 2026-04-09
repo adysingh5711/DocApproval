@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     // Get access token from JWT
     const token = await getToken({ req });
     const accessToken = token?.accessToken as string | undefined;
-    
+
     if (!accessToken) {
       return NextResponse.json({ error: "No access token. Please sign out and sign back in." }, { status: 401 });
     }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 2. Fetch title from Drive API
-    // supportsAllDrives=true is REQUIRED for files in Shared Drives — without it Drive returns 404
+    // supportsAllDrives=true is REQUIRED for files in Shared Drives - without it Drive returns 404
     const titleRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name&supportsAllDrives=true`,
       {
@@ -112,15 +112,15 @@ export async function POST(req: NextRequest) {
         // Enrich with per-reviewer action timestamps and profiles
         if (latestApprovalSnapshot.reviewerResponses) {
           console.log(`[analyse] Enriching ${latestApprovalSnapshot.reviewerResponses.length} reviewers...`);
-          
+
           const timestampMap = await fetchReviewerTimestamps(fileId, accessToken);
-          
+
           // Fetch profiles in parallel
           const enrichedResponses = await Promise.all(
             latestApprovalSnapshot.reviewerResponses.map(async (r: any) => {
               const email = r.reviewer.emailAddress;
               const profile = await fetchGoogleProfile(email, accessToken, session.user?.email!);
-              
+
               return {
                 ...r,
                 actionTime: timestampMap[email?.toLowerCase()] ?? null,
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
               };
             })
           );
-          
+
           latestApprovalSnapshot.reviewerResponses = enrichedResponses;
         }
       }

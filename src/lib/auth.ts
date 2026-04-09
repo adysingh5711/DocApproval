@@ -56,7 +56,8 @@ export const authOptions: NextAuthOptions = {
             "https://www.googleapis.com/auth/directory.readonly",
             "https://www.googleapis.com/auth/gmail.send",
             "https://www.googleapis.com/auth/chat.spaces",
-          ].join(" "),        },
+          ].join(" "),
+        },
       },
     }),
   ],
@@ -76,10 +77,10 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // Token is expired or about to expire — refresh it
+      // Token is expired or about to expire - refresh it
       const refreshToken = token.refreshToken as string | undefined;
       if (!refreshToken) {
-        console.warn("No refresh token available — user must re-authenticate");
+        console.warn("No refresh token available - user must re-authenticate");
         return { ...token, error: "RefreshTokenMissing" };
       }
 

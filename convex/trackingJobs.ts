@@ -25,7 +25,7 @@ export const start = mutation({
   handler: async (ctx, args): Promise<Id<"trackingJobs">> => {
     const unitMs = { hours: 3600000, days: 86400000, weeks: 604800000 };
     const intervalMs = args.intervalValue * unitMs[args.intervalUnit];
-    
+
     // Check if job already exists
     const existing = await ctx.db
       .query("trackingJobs")
@@ -33,7 +33,7 @@ export const start = mutation({
       .unique();
 
     const nextRunAt = Date.now() + intervalMs;
-    
+
     // Schedule the first run
     const convexJobId: Id<"_scheduled_functions"> = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
       documentId: args.documentId,
@@ -108,7 +108,7 @@ export const runTrackingJob = internalAction({
     const tokens = await ctx.runQuery(internal.users.getTokensById, { userId: args.userId });
     const job = await ctx.runQuery(api.trackingJobs.getByDocument, { documentId: args.documentId });
     const document = await ctx.runQuery(api.documents.get, { documentId: args.documentId });
-    
+
     if (!tokens || !job || !document || !job.active) return;
 
     let accessToken = tokens.accessToken;
@@ -132,7 +132,7 @@ export const runTrackingJob = internalAction({
         const data = await response.json();
         accessToken = data.access_token;
         const expiry = Date.now() + data.expires_in * 1000;
-        
+
         await ctx.runMutation(internal.users.updateTokens, {
           userId: args.userId,
           accessToken: data.access_token,
@@ -151,17 +151,17 @@ export const runTrackingJob = internalAction({
 
     // 3. Fetch latest from Google Drive
     console.log("Syncing document", document.title, "(", args.documentId, ")");
-    
+
     const approvalsRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${document.fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
-    
+
     let latestSnapshot = null;
     if (approvalsRes.ok) {
       const data = await approvalsRes.json();
       if (data.items?.length > 0) {
-        latestSnapshot = data.items.sort((a: any, b: any) => 
+        latestSnapshot = data.items.sort((a: any, b: any) =>
           new Date(b.createTime).getTime() - new Date(a.createTime).getTime())[0];
 
         // Enrich with per-reviewer action timestamps from Drive Activity API
@@ -175,7 +175,7 @@ export const runTrackingJob = internalAction({
       }
     }
 
-    // 4. Update the document snapshot — preserve existing category/subcategory
+    // 4. Update the document snapshot - preserve existing category/subcategory
     await ctx.runMutation(api.documents.upsertDocument, {
       userId: args.userId,
       fileId: document.fileId,

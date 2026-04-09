@@ -1,5 +1,5 @@
 export const seoConfig = {
-  title: "DocApproval — Document Approval Workflows for Teams",
+  title: "DocApproval - Document Approval Workflows for Teams",
   description: "Route documents, collect digital sign-offs, and audit every approval decision in one workspace. Built for ops, legal, finance, and HR teams.",
   canonical: "https://docapproval.vercel.app",
   openGraph: {

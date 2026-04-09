@@ -52,14 +52,17 @@ export function FilterPanel({ categories, subCategories, onApply, onReset }: Fil
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
-        <Button
-          variant={hasActiveFilters ? "default" : "outline"}
-          className={`gap-2 ${hasActiveFilters ? "bg-indigo-600 text-white hover:bg-indigo-700" : ""}`}
-        >
-          Filters {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={(props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+          <Button
+            {...props}
+            variant={hasActiveFilters ? "default" : "outline"}
+            className={`gap-2 ${hasActiveFilters ? "bg-indigo-600 text-white hover:bg-indigo-700" : ""}`}
+          >
+            Filters {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        )}
+      />
       <PopoverContent className="w-[280px] p-4 flex flex-col gap-4" align="end">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

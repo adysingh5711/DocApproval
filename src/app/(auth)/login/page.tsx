@@ -27,7 +27,7 @@ export default function LoginPage() {
           <span className="text-xl font-semibold tracking-tight">DocApproval</span>
         </div>
 
-        {/* Hero copy — condensed on mobile */}
+        {/* Hero copy - condensed on mobile */}
         <div className="z-10 mt-10 lg:mt-0 space-y-5 pb-2 lg:pb-0">
           <h1 className="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">
             Approvals that<br className="hidden sm:block" /> move at your pace.
@@ -37,7 +37,7 @@ export default function LoginPage() {
             in one auditable workspace.
           </p>
 
-          {/* Feature pills — real routes only */}
+          {/* Feature pills - real routes only */}
           <div className="flex flex-wrap gap-2 pt-1">
             {["Dashboard", "Analyse", "Automate"].map((label) => (
               <span

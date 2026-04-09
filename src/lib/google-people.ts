@@ -118,7 +118,7 @@ export async function fetchGoogleProfile(
       ? `https://contacts.google.com/person/${numericId}`
       : `https://contacts.google.com/search/${encodeURIComponent(email)}`;
 
-    // 5. Chat DM URL — two-step: create via spaces:setup, then findDirectMessage for opaque token
+    // 5. Chat DM URL - two-step: create via spaces:setup, then findDirectMessage for opaque token
     let chatDmUrl: string | null = null;
 
     if (isNumeric) {
@@ -144,11 +144,11 @@ export async function fetchGoogleProfile(
           const setupIsOpaque = setupToken && !/^\d+$/.test(setupToken);
 
           if (setupIsOpaque) {
-            // spaces:setup returned a real opaque token directly — use it
+            // spaces:setup returned a real opaque token directly - use it
             chatDmUrl = `https://chat.google.com/u/0/dm/${setupToken}`;
             console.log(`[google-people] Chat DM via spaces:setup (opaque) for ${email}: ${chatDmUrl}`);
           } else {
-            // Step B: spaces:setup returned numeric ID — call findDirectMessage to get real token
+            // Step B: spaces:setup returned numeric ID - call findDirectMessage to get real token
             console.log(`[google-people] spaces:setup returned numeric ID for ${email}, trying findDirectMessage`);
 
             const findRes = await fetch(
@@ -181,7 +181,7 @@ export async function fetchGoogleProfile(
       }
     }
 
-    // Final fallback — email deep link always works, opens Chat's own DM resolution
+    // Final fallback - email deep link always works, opens Chat's own DM resolution
     if (!chatDmUrl) {
       chatDmUrl = `https://chat.google.com/u/0/r/dm?authuser=0&email=${encodeURIComponent(email)}`;
       console.log(`[google-people] Chat DM fallback (email link) for ${email}`);

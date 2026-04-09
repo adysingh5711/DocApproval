@@ -101,7 +101,7 @@ export default function TermsOfServicePage() {
                 </div>
 
                 <div className="pt-6 border-t border-slate-200 text-xs text-slate-400">
-                    DocApproval — open source document approval tracking.
+                    DocApproval - open source document approval tracking.
                 </div>
             </div>
         </div>

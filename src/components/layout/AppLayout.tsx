@@ -43,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const confirmLogout = () => {
-    window.location.href = "/login"; // Perform logout redirection
+    window.location.href = "/"; // Perform logout redirection
   };
 
   // Main layout structure with sidebar and mobile nav
@@ -122,10 +122,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               This will end your current session. You will be redirected to the login page.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:items-center">
-            <DialogClose>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <DialogFooter className="gap-2 sm:items-center">
+            <DialogClose
+              render={(props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+                <Button {...props} variant="outline">
+                  Cancel
+                </Button>
+              )}
+            />
             <Button variant="destructive" onClick={confirmLogout}>
               Logout
             </Button>

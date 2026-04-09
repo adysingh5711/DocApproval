@@ -10,7 +10,7 @@ DocApproval is a document approval workflow platform for teams. Route documents,
 - Google Sign-In
 
 ## Target users
-Operations teams, legal, finance, HR, Project Managers, TPMs, Product Managers (PM) — any team that routes documents for approval.
+Operations teams, legal, finance, HR, Project Managers, TPMs, Product Managers (PM), any team that routes documents for approval.
 
 ## URL
 https://docapproval.vercel.app

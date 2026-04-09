@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "DocApproval — Route, approve, and audit documents faster. Built for ops, legal, finance, and HR teams.";
+export const alt = "DocApproval - Route, approve, and audit documents faster. Built for ops, legal, finance, and HR teams.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -122,7 +122,7 @@ export default function OGImage() {
                             }}
                         >
                             Route documents, collect sign-offs, and audit every decision in one
-                            workspace — built for ops, legal, finance, and HR teams.
+                            workspace - built for ops, legal, finance, and HR teams.
                         </p>
                     </div>
 

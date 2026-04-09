@@ -21,10 +21,10 @@ export default function PrivacyPolicyPage() {
                         <h2 className="text-base font-semibold text-slate-800">1. What We Collect</h2>
                         <p>When you use DocApproval, we store the following data:</p>
                         <ul className="list-disc list-inside space-y-1 pl-2">
-                            <li><strong className="text-slate-700">Google account email address</strong> — used to identify your account and associate your data</li>
-                            <li><strong className="text-slate-700">Document metadata</strong> — the Google Docs file ID, document title, category, subcategory, approval status, and last analysis timestamp for each document you submit</li>
-                            <li><strong className="text-slate-700">Content taxonomy</strong> — the category and subcategory names you define in Settings</li>
-                            <li><strong className="text-slate-700">Email reminder templates</strong> — the custom subject and body text you configure in Settings for reminder emails</li>
+                            <li><strong className="text-slate-700">Google account email address</strong> - used to identify your account and associate your data</li>
+                            <li><strong className="text-slate-700">Document metadata</strong> - the Google Docs file ID, document title, category, subcategory, approval status, and last analysis timestamp for each document you submit</li>
+                            <li><strong className="text-slate-700">Content taxonomy</strong> - the category and subcategory names you define in Settings</li>
+                            <li><strong className="text-slate-700">Email reminder templates</strong> - the custom subject and body text you configure in Settings for reminder emails</li>
                         </ul>
                         <p>
                             We do <strong className="text-slate-700">not</strong> store the body or contents of your Google Docs. We do not access
@@ -79,7 +79,7 @@ export default function PrivacyPolicyPage() {
                         <h2 className="text-base font-semibold text-slate-800">6. Open Source &amp; Self-Hosting</h2>
                         <p>
                             DocApproval is open-source. If you self-host the application, this Privacy Policy
-                            does not apply — you are responsible for your own data handling. This policy applies
+                            does not apply - you are responsible for your own data handling. This policy applies
                             only to the hosted deployment of DocApproval.
                         </p>
                     </section>
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
                 </div>
 
                 <div className="pt-6 border-t border-slate-200 text-xs text-slate-400">
-                    DocApproval — open source document approval tracking.
+                    DocApproval - open source document approval tracking.
                 </div>
             </div>
         </div>

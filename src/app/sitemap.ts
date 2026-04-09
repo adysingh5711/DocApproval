@@ -5,14 +5,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: "https://docapproval.vercel.app",
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: "https://docapproval.vercel.app/login",
+      url: "https://docapproval.vercel.app/terms",
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: "https://docapproval.vercel.app/privacy",
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 }

@@ -1,0 +1,20 @@
+# DocApproval
+
+DocApproval is a document approval workflow platform for teams. Route documents, collect digital sign-offs, track progress and audit every decision in one workspace.
+
+## Features
+- Document routing and multi-stage approval workflows
+- Real-time status tracking and notifications
+- Role-based access control
+- Analytics and complete audit trails
+- Google Sign-In
+
+## Target users
+Operations teams, legal, finance, HR, Project Managers, TPMs, Product Managers (PM) — any team that routes documents for approval.
+
+## URL
+https://docapproval.vercel.app
+
+## Contact
+singhaditya5711@gmail.com
+https://docapproval.vercel.app/contact

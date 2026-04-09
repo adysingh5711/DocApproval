@@ -1,6 +1,6 @@
 export const seoConfig = {
-  title: "DocApproval",
-  description: "Efficiently manage, track, and approve your documents with real-time insights.",
+  title: "DocApproval — Document Approval Workflows for Teams",
+  description: "Route documents, collect digital sign-offs, and audit every approval decision in one workspace. Built for ops, legal, finance, and HR teams.",
   canonical: "https://docapproval.vercel.app",
   openGraph: {
     type: "website",
@@ -9,8 +9,10 @@ export const seoConfig = {
     siteName: "DocApproval",
   },
   twitter: {
-    handle: "@docapproval",
+    card: "summary_large_image",
     site: "@docapproval",
-    cardType: "summary_large_image",
+    handle: "@docapproval",
+    creator: "@singhaditya5711",
+    // images: ["https://docapproval.vercel.app/images/og-image.png"]
   },
 };

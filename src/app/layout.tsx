@@ -27,18 +27,33 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  verification: {
+    google: "WnaeKbRB9LIW77kvZTKfbOwFX24eDJApdNn78nZvksc",
+  },
   openGraph: {
     ...seoConfig.openGraph,
-    images: [
-      {
-        url: "/images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "DocApproval",
-      },
-    ],
+    // images: [
+    //   {
+    //     url: "/images/og-image.png",
+    //     width: 1200,
+    //     height: 630,
+    //     alt: "DocApproval",
+    //   },
+    // ],
   },
-  twitter: seoConfig.twitter,
+  twitter: {
+    card: "summary_large_image",
+    site: seoConfig.twitter.site,
+    creator: seoConfig.twitter.creator,
+    // images: [
+    //   {
+    //     url: "/images/og-image.png",
+    //     width: 1200,
+    //     height: 630,
+    //     alt: "DocApproval",
+    //   },
+    // ],
+  },
   icons: {
     icon: [{ url: "/favicon.ico" }],
   },
@@ -47,10 +62,16 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "DocApproval",
-  "description": seoConfig.description,
-  "applicationCategory": "BusinessApplication",
-  "operatingSystem": "Web",
+  name: "DocApproval",
+  url: seoConfig.canonical,
+  description: seoConfig.description,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
 };
 
 export default function RootLayout({
@@ -68,20 +89,21 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-62M7X7KLVQ" />
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-62M7X7KLVQ"
+        />
         <Script id="google-analytics">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-62M7X7KLVQ');
+            gtag(\'js\', new Date());
+            gtag(\'config\', \'G-62M7X7KLVQ\');
           `}
         </Script>
       </head>
       <body className="h-full flex flex-col overflow-hidden">
-        <ConvexClientProvider>
-          {children}
-        </ConvexClientProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
         <Analytics />
         <SpeedInsights />
       </body>

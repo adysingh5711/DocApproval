@@ -60,10 +60,7 @@ export default function LandingPage() {
       {/* ── Nav ── */}
       <nav className="w-full px-6 lg:px-14 py-4 flex items-center justify-between border-b border-slate-200 bg-slate-50/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-base select-none">
-            D
-          </div>
-          <span className="text-base font-semibold tracking-tight text-slate-900">DocApproval</span>
+          <img src="/images/DocApproval-logo/DocApproval-full-violet.svg" alt="DocApproval Logo" className="h-9" />
         </div>
         <Link
           href="/login"
@@ -151,14 +148,11 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="px-6 lg:px-14 py-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
         <div className="sm:flex-1 flex items-center gap-2">
-          <div className="h-6 w-6 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-xs select-none">
-            D
-          </div>
-          <span>DocApproval</span>
+          <img src="/images/DocApproval-logo/DocApproval-full-violet.svg" alt="DocApproval Logo" className="h-6" />
         </div>
         <div className="flex gap-4">
-          <a href="/terms" className="hover:text-indigo-600 transition-colors">Terms</a>
-          <a href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy</a>
+          <a href="/terms" className="underline underline-offset-2 hover:text-indigo-600 transition-colors"> Terms of Service </a>
+          <a href="/privacy" className="underline underline-offset-2 hover:text-indigo-600 transition-colors"> Privacy Policy </a>
         </div>
         <div className="sm:flex-1 flex justify-center sm:justify-end">
           <p>© {new Date().getFullYear()} DocApproval. All rights reserved.</p>

@@ -79,22 +79,14 @@ export default async function Image() {
                             marginBottom: 32,
                         }}
                     >
-                        <div
+                        <img
+                            src="https://raw.githubusercontent.com/HugoHub/DocApproval/refs/heads/main/public/images/DocApproval-logo/DocApproval.svg"
+                            width={52}
+                            height={52}
                             style={{
-                                width: 52,
-                                height: 52,
                                 borderRadius: 12,
-                                background: "#ffffff",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "#4338ca", // indigo-700
-                                fontWeight: 700,
-                                fontSize: 26,
                             }}
-                        >
-                            D
-                        </div>
+                        />
                         <span
                             style={{
                                 color: "#ffffff",

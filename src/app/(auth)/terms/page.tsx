@@ -6,10 +6,7 @@ export default function TermsOfServicePage() {
                 {/* Header */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm select-none">
-                            D
-                        </div>
-                        <span className="text-lg font-semibold text-slate-800 tracking-tight">DocApproval</span>
+                        <img src="/images/DocApproval-logo/DocApproval-full-violet.svg" alt="DocApproval Logo" className="h-9" />
                     </div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Terms of Service</h1>
                     <p className="text-sm text-slate-400">Last updated: April 2026</p>

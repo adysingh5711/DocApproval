@@ -24,8 +24,8 @@ function NavItem({ icon, label, href, active }: { icon: React.ReactNode, label: 
     <Link
       href={href}
       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${active
-          ? "bg-indigo-50 text-indigo-600 font-medium"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 font-medium"
+        ? "bg-indigo-50 text-indigo-600 font-medium"
+        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 font-medium"
         }`}
     >
       {icon}
@@ -51,8 +51,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-slate-50/50 overflow-hidden">
       <aside className="w-64 border-r bg-white p-6 flex flex-col gap-8 hidden md:flex shrink-0">
         <div className="flex items-center gap-2 px-2 shrink-0">
-          <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
-          <span className="font-bold text-xl tracking-tight text-slate-900">DocApproval</span>
+          <img src="/images/DocApproval-logo/DocApproval-full-violet.svg" alt="DocApproval Logo" className="h-9" />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -122,7 +121,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               This will end your current session. You will be redirected to the login page.
             </DialogDescription>
           </DialogHeader>
-            <DialogFooter className="gap-2 sm:items-center">
+          <DialogFooter className="gap-2 sm:items-center">
             <DialogClose
               render={(props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
                 <Button {...props} variant="outline">

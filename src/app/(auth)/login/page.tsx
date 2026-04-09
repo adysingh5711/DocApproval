@@ -21,10 +21,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 z-10">
-          <div className="h-9 w-9 bg-white rounded-lg flex items-center justify-center text-indigo-600 font-bold text-lg select-none">
-            D
-          </div>
-          <span className="text-xl font-semibold tracking-tight">DocApproval</span>
+          <img src="/images/DocApproval-logo/DocApproval-full-white.svg" alt="DocApproval Logo" className="h-9" />
         </div>
 
         {/* Hero copy - condensed on mobile */}

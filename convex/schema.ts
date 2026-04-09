@@ -37,6 +37,10 @@ export default defineSchema({
     lastRunAt: v.optional(v.number()),
     nextRunAt: v.number(),
     convexJobId: v.optional(v.id("_scheduled_functions")),
+    // --- NEW ---
+    autoSendReminder: v.optional(v.boolean()),      // whether to email on each tick
+    reminderRecipients: v.optional(v.array(v.string())), // reviewer emails to remind
+    reminderOnlyPending: v.optional(v.boolean()),   // only email reviewers who haven't responded yet
   }).index("by_documentId", ["documentId"])
     .index("by_userId", ["userId"]),
 

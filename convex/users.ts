@@ -53,6 +53,13 @@ export const getTokensById = internalQuery({
   },
 });
 
+export const getById = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
 export const upsertUserTokens = mutation({
   args: {
     email: v.string(),
@@ -73,7 +80,7 @@ export const upsertUserTokens = mutation({
       if (args.accessToken !== undefined) updates.accessToken = args.accessToken;
       if (args.refreshToken !== undefined) updates.refreshToken = args.refreshToken;
       if (args.tokenExpiry !== undefined) updates.tokenExpiry = args.tokenExpiry;
-      
+
       await ctx.db.patch(existing._id, updates);
       return existing._id;
     } else {

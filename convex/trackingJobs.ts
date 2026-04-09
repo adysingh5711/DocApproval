@@ -21,50 +21,48 @@ export const start = mutation({
     intervalValue: v.number(),
     intervalUnit: v.union(v.literal("hours"), v.literal("days"), v.literal("weeks")),
     autoStop: v.boolean(),
+    // --- NEW ---
+    autoSendReminder: v.optional(v.boolean()),
+    reminderRecipients: v.optional(v.array(v.string())),
+    reminderOnlyPending: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Id<"trackingJobs">> => {
     const unitMs = { hours: 3600000, days: 86400000, weeks: 604800000 };
     const intervalMs = args.intervalValue * unitMs[args.intervalUnit];
-
-    // Check if job already exists
     const existing = await ctx.db
       .query("trackingJobs")
       .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
       .unique();
 
     const nextRunAt = Date.now() + intervalMs;
+    const convexJobId: Id<"_scheduled_functions"> = await ctx.scheduler.runAt(
+      nextRunAt,
+      internal.trackingJobs.runTrackingJob,
+      { documentId: args.documentId, userId: args.userId }
+    );
 
-    // Schedule the first run
-    const convexJobId: Id<"_scheduled_functions"> = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
-      documentId: args.documentId,
-      userId: args.userId,
-    });
+    const jobFields = {
+      intervalValue: args.intervalValue,
+      intervalUnit: args.intervalUnit,
+      intervalMs,
+      autoStop: args.autoStop,
+      active: true,
+      nextRunAt,
+      convexJobId,
+      autoSendReminder: args.autoSendReminder ?? false,
+      reminderRecipients: args.reminderRecipients ?? [],
+      reminderOnlyPending: args.reminderOnlyPending ?? true,
+    };
 
     if (existing) {
-      if (existing.convexJobId) {
-        await ctx.scheduler.cancel(existing.convexJobId);
-      }
-      await ctx.db.patch(existing._id, {
-        intervalValue: args.intervalValue,
-        intervalUnit: args.intervalUnit,
-        intervalMs,
-        autoStop: args.autoStop,
-        active: true,
-        nextRunAt,
-        convexJobId,
-      });
+      if (existing.convexJobId) await ctx.scheduler.cancel(existing.convexJobId);
+      await ctx.db.patch(existing._id, jobFields);
       return existing._id;
     } else {
       return await ctx.db.insert("trackingJobs", {
         userId: args.userId,
         documentId: args.documentId,
-        intervalValue: args.intervalValue,
-        intervalUnit: args.intervalUnit,
-        intervalMs,
-        autoStop: args.autoStop,
-        active: true,
-        nextRunAt,
-        convexJobId,
+        ...jobFields,
       });
     }
   },
@@ -104,19 +102,19 @@ export const updateJobState = mutation({
 export const runTrackingJob = internalAction({
   args: { documentId: v.id("documents"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    // 1. Get tokens and job info
+    // 1. Fetch tokens, job, document
     const tokens = await ctx.runQuery(internal.users.getTokensById, { userId: args.userId });
     const job = await ctx.runQuery(api.trackingJobs.getByDocument, { documentId: args.documentId });
     const document = await ctx.runQuery(api.documents.get, { documentId: args.documentId });
+    const user = await ctx.runQuery(internal.users.getById, { userId: args.userId });
 
     if (!tokens || !job || !document || !job.active) return;
 
     let accessToken = tokens.accessToken;
 
-    // 2. Refresh token if expired (or missing)
-    const isExpired = !tokens.tokenExpiry || Date.now() > tokens.tokenExpiry - 60000; // 1 min buffer
+    // 2. Refresh token if expired
+    const isExpired = !tokens.tokenExpiry || Date.now() > tokens.tokenExpiry - 60000;
     if (isExpired && tokens.refreshToken) {
-      console.log("Token expired for user", args.userId, "- refreshing...");
       const response = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -131,27 +129,20 @@ export const runTrackingJob = internalAction({
       if (response.ok) {
         const data = await response.json();
         accessToken = data.access_token;
-        const expiry = Date.now() + data.expires_in * 1000;
-
         await ctx.runMutation(internal.users.updateTokens, {
           userId: args.userId,
           accessToken: data.access_token,
-          tokenExpiry: expiry,
+          tokenExpiry: Date.now() + data.expires_in * 1000,
         });
-
-        // Note: My existing upsertUserTokens mutation uses googleId to lookup.
-        // We might need a generic `updateUserTokens` mutation for actions.
       } else {
-        console.error("Failed to refresh token", await response.text());
+        console.error("Token refresh failed:", await response.text());
         return;
       }
     }
 
     if (!accessToken) return;
 
-    // 3. Fetch latest from Google Drive
-    console.log("Syncing document", document.title, "(", args.documentId, ")");
-
+    // 3. Fetch latest approval snapshot from Google Drive
     const approvalsRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${document.fileId}/approvals?fields=items(approvalId,status,createTime,modifyTime,reviewerResponses(reviewer(emailAddress,displayName),response))`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -162,9 +153,9 @@ export const runTrackingJob = internalAction({
       const data = await approvalsRes.json();
       if (data.items?.length > 0) {
         latestSnapshot = data.items.sort((a: any, b: any) =>
-          new Date(b.createTime).getTime() - new Date(a.createTime).getTime())[0];
+          new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+        )[0];
 
-        // Enrich with per-reviewer action timestamps from Drive Activity API
         if (latestSnapshot.reviewerResponses) {
           const timestampMap = await fetchReviewerTimestamps(document.fileId, accessToken);
           latestSnapshot.reviewerResponses = latestSnapshot.reviewerResponses.map((r: any) => ({
@@ -175,7 +166,7 @@ export const runTrackingJob = internalAction({
       }
     }
 
-    // 4. Update the document snapshot - preserve existing category/subcategory
+    // 4. Upsert document snapshot
     await ctx.runMutation(api.documents.upsertDocument, {
       userId: args.userId,
       fileId: document.fileId,
@@ -187,34 +178,100 @@ export const runTrackingJob = internalAction({
       latestApprovalSnapshot: latestSnapshot,
     });
 
-    // After upsertDocument, check autoStop
+    // 5. AutoStop check
     if (job.autoStop) {
       const updatedDoc = await ctx.runQuery(api.documents.get, { documentId: args.documentId });
       const terminalStatuses = ["APPROVED", "DECLINED", "CANCELLED"];
-      if (updatedDoc && terminalStatuses.includes(updatedDoc.latestApprovalSnapshot?.status ?? "")) {
+      const derivedStatus = updatedDoc?.latestApprovalSnapshot?.status ?? "";
+      if (updatedDoc && terminalStatuses.includes(derivedStatus)) {
         await ctx.runMutation(api.trackingJobs.updateJobState, {
           jobId: job._id,
           updates: { active: false, convexJobId: undefined },
         });
-        return;
+        return; // do not reschedule, do not send reminder
       }
     }
 
-    // 5. Schedule the next run
+    // 6. AUTO SEND REMINDER — runs from Convex server, no browser session needed
+    if (job.autoSendReminder && job.reminderRecipients && job.reminderRecipients.length > 0) {
+      const senderEmail = user?.email;
+      if (senderEmail) {
+        // Determine who to remind
+        let targets: string[] = job.reminderRecipients;
+
+        if (job.reminderOnlyPending && latestSnapshot?.reviewerResponses) {
+          // Filter down to reviewers who have not yet responded
+          const pendingEmails = new Set(
+            latestSnapshot.reviewerResponses
+              .filter((r: any) => !r.response || r.response === "PENDING" || r.response === "NO_RESPONSE")
+              .map((r: any) => r.reviewer.emailAddress?.toLowerCase())
+              .filter(Boolean)
+          );
+          targets = targets.filter((email) => pendingEmails.has(email.toLowerCase()));
+        }
+
+        if (targets.length > 0) {
+          const subject = user?.reminderSubject
+            ?.replace("{Document Title}", document.title)
+            ?.replace("{Document Link}", document.docUrl)
+            ?? `Action needed: Please review "${document.title}"`;
+
+          const body = user?.reminderBody
+            ?.replace("{Document Title}", document.title)
+            ?.replace("{Document Link}", document.docUrl)
+            ?? `Hi,\n\nThis is a reminder that "${document.title}" is awaiting your review.\n\nLink: ${document.docUrl}\n\nThank you.`;
+
+          for (const recipientEmail of targets) {
+            const rawEmail = [
+              `From: ${senderEmail}`,
+              `To: ${recipientEmail}`,
+              `Subject: ${subject}`,
+              `Content-Type: text/plain; charset=utf-8`,
+              ``,
+              body,
+            ].join("\r\n");
+
+            const encodedEmail = Buffer.from(rawEmail)
+              .toString("base64")
+              .replace(/\+/g, "-")
+              .replace(/\//g, "_")
+              .replace(/=+$/, "");
+
+            const gmailRes = await fetch(
+              "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ raw: encodedEmail }),
+              }
+            );
+
+            if (!gmailRes.ok) {
+              console.error(
+                `Failed to send reminder to ${recipientEmail}:`,
+                await gmailRes.text()
+              );
+            } else {
+              console.log(`Auto-reminder sent to ${recipientEmail} for "${document.title}"`);
+            }
+          }
+        }
+      }
+    }
+
+    // 7. Schedule next run
     const nextRunAt = Date.now() + job.intervalMs;
     const convexJobId = await ctx.scheduler.runAt(nextRunAt, internal.trackingJobs.runTrackingJob, {
       documentId: args.documentId,
       userId: args.userId,
     });
 
-    // 6. Update job state
     await ctx.runMutation(api.trackingJobs.updateJobState, {
       jobId: job._id,
-      updates: {
-        lastRunAt: Date.now(),
-        nextRunAt,
-        convexJobId,
-      }
+      updates: { lastRunAt: Date.now(), nextRunAt, convexJobId },
     });
   },
 });

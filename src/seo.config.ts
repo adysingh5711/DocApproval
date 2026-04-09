@@ -7,12 +7,23 @@ export const seoConfig = {
     locale: "en_US",
     url: "https://docapproval.vercel.app",
     siteName: "DocApproval",
+    images: [
+      {
+        url: "/opengraph-image",
+      },
+      {
+        url: "/images/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "DocApproval",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     site: "@docapproval",
     handle: "@docapproval",
     creator: "@singhaditya5711",
-    // images: ["https://docapproval.vercel.app/images/og-image.png"]
+    images: ["/images/og-image.png"],
   },
 };

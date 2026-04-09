@@ -32,27 +32,12 @@ export const metadata: Metadata = {
   },
   openGraph: {
     ...seoConfig.openGraph,
-    // images: [
-    //   {
-    //     url: "/images/og-image.png",
-    //     width: 1200,
-    //     height: 630,
-    //     alt: "DocApproval",
-    //   },
-    // ],
   },
   twitter: {
     card: "summary_large_image",
     site: seoConfig.twitter.site,
     creator: seoConfig.twitter.creator,
-    // images: [
-    //   {
-    //     url: "/images/og-image.png",
-    //     width: 1200,
-    //     height: 630,
-    //     alt: "DocApproval",
-    //   },
-    // ],
+    images: seoConfig.twitter.images,
   },
   icons: {
     icon: [{ url: "/favicon.ico" }],

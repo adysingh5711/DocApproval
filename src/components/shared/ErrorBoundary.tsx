@@ -2,7 +2,6 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle, RefreshCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Props {
   children?: ReactNode;
@@ -15,12 +14,9 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
+  public state: State = { hasError: false };
 
   public static getDerivedStateFromError(_: Error): State {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true };
   }
 
@@ -33,25 +29,30 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className={`p-6 bg-rose-50 border border-rose-100 rounded-xl flex flex-col items-center justify-center text-center space-y-4 ${this.props.className}`}>
-          <div className="h-12 w-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
-            <AlertCircle size={24} />
+        <div
+          className={`p-6 bg-rose-50 border border-rose-100 rounded-2xl flex flex-col gap-4 ${this.props.className ?? ""}`}
+        >
+          {/* Icon + text */}
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center shrink-0">
+              <AlertCircle size={16} className="text-rose-600" />
+            </div>
+            <div className="pt-0.5 space-y-0.5">
+              <p className="text-sm font-semibold text-rose-900">Something went wrong</p>
+              <p className="text-xs text-rose-500 leading-relaxed">
+                An error occurred while rendering this component.
+              </p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-rose-900">Something went wrong</h3>
-            <p className="text-sm text-rose-600/80 max-w-[250px]">
-              We encountered an error while rendering this component.
-            </p>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          {/* Retry */}
+          <button
             onClick={() => this.setState({ hasError: false })}
-            className="border-rose-200 text-rose-700 hover:bg-rose-100"
+            className="self-start flex items-center gap-1.5 text-xs font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors"
           >
-            <RefreshCcw size={14} className="mr-2" />
+            <RefreshCcw size={12} />
             Try again
-          </Button>
+          </button>
         </div>
       );
     }

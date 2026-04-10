@@ -1,25 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Mail,
-  MessageSquare,
-  Video,
-  Calendar,
-  Copy,
-  ExternalLink,
-  Check
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Mail, MessageSquare, Video, Calendar, Copy, ExternalLink, Check } from "lucide-react";
 
-// --- Global Profile Store (Simple singleton for session) ---
+// ── Store (unchanged) ─────────────────────────────────────────────────────────
 interface Person {
   name: string;
   photoUrl: string | null;
@@ -33,55 +19,69 @@ interface Person {
 const profileCache: Record<string, Person> = {};
 const listeners: Set<() => void> = new Set();
 let activeEmail: string | null = null;
-
-const notify = () => listeners.forEach(l => l());
+const notify = () => listeners.forEach((l) => l());
 
 const store = {
   getProfile: (email: string) => profileCache[email],
-  setProfile: (email: string, person: Person) => {
-    profileCache[email] = person;
-    notify();
-  },
+  setProfile: (email: string, person: Person) => { profileCache[email] = person; notify(); },
   getActiveEmail: () => activeEmail,
-  setActiveEmail: (email: string | null) => {
-    activeEmail = email;
-    notify();
-  },
+  setActiveEmail: (email: string | null) => { activeEmail = email; notify(); },
   subscribe: (listener: () => void) => {
     listeners.add(listener);
-    return () => listeners.delete(listener);
-  }
+    return () => {
+      listeners.delete(listener);
+    };
+  },
 };
 
-// --- Helper component for the Trigger Avatar ---
-export function ReviewerAvatar({ email, name, className }: { email: string, name: string, className?: string }) {
+// ── ReviewerAvatar (unchanged) ────────────────────────────────────────────────
+export function ReviewerAvatar({ email, name, className }: { email: string; name: string; className?: string }) {
   const [profile, setProfile] = useState<Person | null>(store.getProfile(email));
 
   useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      setProfile(store.getProfile(email));
-    });
-    return () => {
-      unsubscribe();
-    };
+    return store.subscribe(() => setProfile(store.getProfile(email)));
   }, [email]);
 
   return (
     <Avatar className={className}>
       <AvatarImage src={profile?.photoUrl || undefined} className="object-cover" />
       <AvatarFallback className="bg-indigo-50 text-indigo-700 text-xs font-bold">
-        {name.split(" ").map(n => n[0]).join("").toUpperCase()}
+        {name.split(" ").map((n) => n[0]).join("").toUpperCase()}
       </AvatarFallback>
     </Avatar>
   );
 }
 
-// --- Main Hover Component ---
+// ── Action icon button ────────────────────────────────────────────────────────
+function ActionBtn({
+  icon,
+  label,
+  onClick,
+  disabled,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all disabled:opacity-30 disabled:pointer-events-none"
+    >
+      {icon}
+    </button>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export function GoogleProfileHover({
   email,
   name,
   children,
-  initialProfile
+  initialProfile,
 }: {
   email: string;
   name: string;
@@ -97,47 +97,28 @@ export function GoogleProfileHover({
   const fetchPromise = useRef<Promise<void> | null>(null);
   const isOver = useRef(false);
 
-  // Update store when initialProfile arrives or changes
   useEffect(() => {
-    if (initialProfile) {
-      store.setProfile(email, initialProfile);
-    }
+    if (initialProfile) store.setProfile(email, initialProfile);
   }, [email, initialProfile]);
 
   useEffect(() => {
-    const unsub = store.subscribe(() => {
+    return store.subscribe(() => {
       setProfile(store.getProfile(email));
       setActive(store.getActiveEmail() === email);
     });
-    return () => {
-      unsub();
-    };
   }, [email]);
 
   const fetchProfile = async () => {
     if (fetchPromise.current) return fetchPromise.current;
     if (store.getProfile(email)) return Promise.resolve();
-
     setLoading(true);
     fetchPromise.current = (async () => {
       try {
-        const res = await fetch(`/api/user/profile?email=${encodeURIComponent(email)}&t=${Date.now()}`, {
-          cache: 'no-store'
-        });
-        if (!res.ok) throw new Error("Failed to fetch");
+        const res = await fetch(`/api/user/profile?email=${encodeURIComponent(email)}&t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed");
         const data = await res.json();
-        const person = data.person || {
-          name: name,
-          email: email,
-          photoUrl: null,
-          jobTitle: null,
-          company: null,
-          contactsUrl: null,
-          chatDmUrl: null
-        };
-        store.setProfile(email, person);
-      } catch (err) {
-        console.error("Error fetching profile:", err);
+        store.setProfile(email, data.person || { name, email, photoUrl: null, jobTitle: null, company: null, contactsUrl: null, chatDmUrl: null });
+      } catch {
         store.setProfile(email, { name, email, photoUrl: null, jobTitle: null, company: null, contactsUrl: null, chatDmUrl: null });
       } finally {
         setLoading(false);
@@ -150,28 +131,16 @@ export function GoogleProfileHover({
   const handleMouseEnter = () => {
     isOver.current = true;
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-
-    const show = () => {
-      if (isOver.current) {
-        store.setActiveEmail(email);
-      }
-    };
-
-    if (!profile && !loading) {
-      fetchProfile().then(show);
-    } else if (profile) {
-      hoverTimeout.current = setTimeout(show, 150);
-    }
+    const show = () => { if (isOver.current) store.setActiveEmail(email); };
+    if (!profile && !loading) fetchProfile().then(show);
+    else if (profile) hoverTimeout.current = setTimeout(show, 150);
   };
 
   const handleMouseLeave = () => {
     isOver.current = false;
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-    
     hoverTimeout.current = setTimeout(() => {
-      if (store.getActiveEmail() === email) {
-        store.setActiveEmail(null);
-      }
+      if (store.getActiveEmail() === email) store.setActiveEmail(null);
     }, 300);
   };
 
@@ -184,157 +153,107 @@ export function GoogleProfileHover({
 
   return (
     <HoverCard open={active} onOpenChange={(open) => !open && store.setActiveEmail(null)}>
-      <HoverCardTrigger
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
+      <HoverCardTrigger onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <div className="inline-block">{children}</div>
       </HoverCardTrigger>
 
       <HoverCardContent
         side="bottom"
         align="start"
-        sideOffset={4}
-        alignOffset={0}
+        sideOffset={6}
         className="p-0 border-none bg-transparent shadow-none z-[100] w-fit"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div
-          style={{
-            boxShadow: "0 1px 2px 0 rgba(60,64,67,0.30), 0 1px 3px 1px rgba(60,64,67,0.15)",
-            borderRadius: "8px",
-            backgroundColor: "#fff",
-            width: "320px",
-            overflow: "hidden"
-          }}
-        >
+        <div className="w-[300px] bg-white border border-slate-100 rounded-2xl shadow-lg overflow-hidden">
           {profile ? (
             <>
-              {/* Main Content Area (Avatar + Info) */}
-              <div className="flex p-4 pb-3">
-                <Avatar className="h-16 w-16 mr-4 shrink-0">
+              {/* Avatar + name block */}
+              <div className="px-5 pt-5 pb-4 flex items-start gap-4">
+                <Avatar className="h-14 w-14 shrink-0 ring-2 ring-slate-100">
                   <AvatarImage src={profile.photoUrl || undefined} className="object-cover" />
-                  <AvatarFallback className="bg-indigo-600 text-white text-xl font-medium">
-                    {profile.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                  <AvatarFallback className="bg-indigo-600 text-white text-lg font-semibold">
+                    {profile.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <h3 className="text-[18px] font-medium text-[#202124] leading-6 truncate font-sans">
+                <div className="flex-1 min-w-0 pt-0.5 space-y-0.5">
+                  <p className="text-sm font-semibold text-slate-900 truncate leading-snug">
                     {profile.name}
-                  </h3>
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="text-[14px] text-[#5f6368] leading-5 truncate font-sans">
-                      {profile.email}
-                    </span>
-                    <button
-                      className="p-1 text-[#5f6368] hover:bg-slate-100 rounded-full transition-colors shrink-0 flex items-center gap-1"
-                      onClick={copyEmail}
-                      title="Copy email"
-                    >
-                      {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-                      {copied && <span className="text-[10px] text-green-600 font-medium">Copied!</span>}
-                    </button>
-                  </div>
+                  </p>
                   {(profile.jobTitle || profile.company) && (
-                    <p className="text-[14px] text-[#5f6368] mt-1 truncate">
-                      {[profile.jobTitle, profile.company].filter(Boolean).join(" • ")}
+                    <p className="text-xs text-slate-500 truncate">
+                      {[profile.jobTitle, profile.company].filter(Boolean).join(" · ")}
                     </p>
                   )}
-                </div>
-              </div>
-
-              {/* Verified Badge / Metadata Area */}
-              <div className="px-4 pb-4">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="h-1.5 w-1.5 bg-green-500 rounded-full" />
-                  Google Workspace Profile
-                </div>
-              </div>
-
-              {/* Action Buttons Row */}
-              <div className="flex items-center gap-2 p-2 px-3 border-t border-[#dadce0] bg-slate-50/30">
-                
-                {/* Mail */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
-                  title="Send email"
-                  onClick={() => window.open(`mailto:${email}`, "_blank")}
-                >
-                  <Mail size={18} />
-                </Button>
-
-                {/* Chat */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5 disabled:opacity-40"
-                  title="Open Google Chat DM"
-                  disabled={!profile.chatDmUrl}
-                  onClick={() => profile.chatDmUrl && window.open(profile.chatDmUrl, "_blank")}
-                >
-                  <MessageSquare size={18} />
-                </Button>
-
-                {/* Meet */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
-                  title="Start Google Meet call"
-                  onClick={() =>
-                    window.open(
-                      `https://meet.google.com/new?calleeId=${encodeURIComponent(email)}&authuser=0`,
-                      "_blank"
-                    )
-                  }
-                >
-                  <Video size={18} />
-                </Button>
-
-                {/* Calendar */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-black/5"
-                  title="Schedule calendar event"
-                  onClick={() =>
-                    window.open(
-                      `https://calendar.google.com/calendar/r/eventedit?add=${encodeURIComponent(email)}&authuser=0`,
-                      "_blank"
-                    )
-                  }
-                >
-                  <Calendar size={18} />
-                </Button>
-
-                {/* Open Profile */}
-                <div className="ml-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-[13px] font-medium text-indigo-600 hover:bg-indigo-50 px-2"
-                    onClick={() =>
-                      window.open(
-                        profile.contactsUrl ?? `https://contacts.google.com/search/${encodeURIComponent(email)}`,
-                        "_blank"
-                      )
-                    }
+                  <button
+                    onClick={copyEmail}
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 transition-colors group/copy mt-0.5"
                   >
-                    Open profile
-                    <ExternalLink size={14} className="ml-1.5" />
-                  </Button>
+                    <span className="truncate max-w-[160px]">{profile.email}</span>
+                    {copied
+                      ? <Check size={11} className="text-emerald-500 shrink-0" />
+                      : <Copy size={11} className="shrink-0 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
+                    }
+                  </button>
                 </div>
+              </div>
+
+              {/* Source badge */}
+              <div className="px-5 pb-3 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+                  Google Workspace
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-slate-100" />
+
+              {/* Action row */}
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-0.5">
+                  <ActionBtn
+                    icon={<Mail size={15} />}
+                    label="Send email"
+                    onClick={() => window.open(`mailto:${email}`, "_blank")}
+                  />
+                  <ActionBtn
+                    icon={<MessageSquare size={15} />}
+                    label="Open Google Chat DM"
+                    disabled={!profile.chatDmUrl}
+                    onClick={() => profile.chatDmUrl && window.open(profile.chatDmUrl, "_blank")}
+                  />
+                  <ActionBtn
+                    icon={<Video size={15} />}
+                    label="Start Google Meet"
+                    onClick={() => window.open(`https://meet.google.com/new?calleeId=${encodeURIComponent(email)}&authuser=0`, "_blank")}
+                  />
+                  <ActionBtn
+                    icon={<Calendar size={15} />}
+                    label="Schedule event"
+                    onClick={() => window.open(`https://calendar.google.com/calendar/r/eventedit?add=${encodeURIComponent(email)}&authuser=0`, "_blank")}
+                  />
+                </div>
+
+                <button
+                  onClick={() => window.open(profile.contactsUrl ?? `https://contacts.google.com/search/${encodeURIComponent(email)}`, "_blank")}
+                  className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                >
+                  Profile
+                  <ExternalLink size={11} />
+                </button>
               </div>
             </>
           ) : (
-            <div className="p-8 flex flex-col items-center justify-center space-y-3">
-              <div className="h-12 w-12 rounded-full bg-slate-100 animate-pulse" />
-              <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
-              <div className="h-3 w-48 bg-slate-50 rounded animate-pulse" />
+            /* Skeleton */
+            <div className="px-5 py-5 flex items-start gap-4">
+              <div className="h-14 w-14 rounded-full bg-slate-100 animate-pulse shrink-0" />
+              <div className="flex-1 pt-1 space-y-2">
+                <div className="h-3.5 w-28 bg-slate-100 rounded-lg animate-pulse" />
+                <div className="h-3 w-36 bg-slate-50 rounded-lg animate-pulse" />
+                <div className="h-3 w-24 bg-slate-50 rounded-lg animate-pulse" />
+              </div>
             </div>
           )}
         </div>
@@ -342,3 +261,5 @@ export function GoogleProfileHover({
     </HoverCard>
   );
 }
+
+

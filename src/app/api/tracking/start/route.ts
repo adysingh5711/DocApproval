@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { documentId, intervalValue, intervalUnit, autoStop } = await req.json();
+    const { documentId, intervalValue, intervalUnit, autoStop, autoSendReminder, reminderRecipients, reminderOnlyPending } = await req.json();
 
     if (!documentId || !intervalValue || !intervalUnit) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -31,6 +31,9 @@ export async function POST(req: Request) {
       intervalValue,
       intervalUnit,
       autoStop: autoStop ?? true,
+      autoSendReminder: autoSendReminder ?? false,
+      reminderRecipients: reminderRecipients ?? [],
+      reminderOnlyPending: reminderOnlyPending ?? true,
     });
 
     return NextResponse.json({ success: true, trackingJobId });

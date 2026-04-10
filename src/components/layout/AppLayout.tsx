@@ -1,12 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Search, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Search, Mail, Tag, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react"; // Import useState
-
-// Import Button and Dialog components
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,93 +14,131 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
-function NavItem({ icon, label, href, active }: { icon: React.ReactNode, label: string, href: string, active?: boolean }) {
+function NavItem({
+  icon,
+  label,
+  href,
+  active,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  active?: boolean;
+}) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${active
-        ? "bg-indigo-50 text-indigo-600 font-medium"
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 font-medium"
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${active
+          ? "bg-indigo-50 text-indigo-600"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
         }`}
     >
       {icon}
-      <span className="text-sm">{label}</span>
+      <span>{label}</span>
     </Link>
+  );
+}
+
+function NavSection({ label }: { label: string }) {
+  return (
+    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-3 pt-4 pb-1">
+      {label}
+    </p>
   );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false); // State for dialog
-
-  const handleLogoutClick = () => {
-    setIsLogoutDialogOpen(true); // Open the dialog
-  };
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const confirmLogout = () => {
-    window.location.href = "/"; // Perform logout redirection
+    window.location.href = "/";
   };
 
-  // Main layout structure with sidebar and mobile nav
   return (
     <div className="flex h-screen bg-slate-50/50 overflow-hidden">
       <aside className="w-64 border-r bg-white p-6 flex flex-col gap-8 hidden md:flex shrink-0">
         <div className="flex items-center gap-2 px-2 shrink-0">
-          <img src="/images/DocApproval-logo/DocApproval-full-violet.svg" alt="DocApproval Logo" className="h-9" />
+          <img
+            src="/images/DocApproval-logo/DocApproval-full-violet.svg"
+            alt="DocApproval Logo"
+            className="h-9"
+          />
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto pr-2 custom-scrollbar">
           <NavItem
-            icon={<LayoutDashboard size={20} />}
+            icon={<LayoutDashboard size={18} />}
             label="Dashboard"
             href="/dashboard"
             active={pathname === "/dashboard"}
           />
           <NavItem
-            icon={<Search size={20} />}
+            icon={<Search size={18} />}
             label="Analyse"
             href="/analyse"
             active={pathname.startsWith("/analyse")}
           />
+
+          <NavSection label="Settings" />
           <NavItem
-            icon={<Settings size={20} />}
-            label="Settings"
-            href="/settings"
-            active={pathname.startsWith("/settings")}
+            icon={<Mail size={18} />}
+            label="Email templates"
+            href="/settings/email"
+            active={pathname === "/settings/email"}
+          />
+          <NavItem
+            icon={<Tag size={18} />}
+            label="Content taxonomy"
+            href="/settings/taxonomy"
+            active={pathname === "/settings/taxonomy"}
           />
         </nav>
 
         <div className="pt-4 border-t shrink-0">
           <button
-            onClick={handleLogoutClick} // Use handler to open dialog
-            className="flex items-center gap-3 text-slate-500 hover:text-rose-600 transition-colors px-3 py-2 w-full"
+            onClick={() => setIsLogoutDialogOpen(true)}
+            className="flex items-center gap-3 text-slate-500 hover:text-rose-600 transition-colors px-3 py-2 w-full text-sm font-medium"
           >
-            <LogOut size={20} />
-            <span className="text-sm font-medium">Logout</span>
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </aside>
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50 shrink-0">
-        <Link href="/dashboard" className={`p-2 rounded-full ${pathname === "/dashboard" ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
-          <LayoutDashboard size={24} />
-        </Link>
-        <Link href="/analyse" className={`p-2 rounded-full ${pathname.startsWith("/analyse") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
-          <Search size={24} />
-        </Link>
-        <Link href="/settings" className={`p-2 rounded-full ${pathname.startsWith("/settings") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}>
-          <Settings size={24} />
-        </Link>
-        {/* Logout button for mobile */}
-        <button
-          onClick={handleLogoutClick} // Use handler to open dialog
-          className={`p-2 rounded-full ${pathname.startsWith("/login") ? "text-rose-600 bg-rose-50" : "text-slate-500 hover:text-rose-600"}`}
+        <Link
+          href="/dashboard"
+          className={`p-2 rounded-full ${pathname === "/dashboard" ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}
         >
-          <LogOut size={24} />
+          <LayoutDashboard size={22} />
+        </Link>
+        <Link
+          href="/analyse"
+          className={`p-2 rounded-full ${pathname.startsWith("/analyse") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}
+        >
+          <Search size={22} />
+        </Link>
+        <Link
+          href="/settings/email"
+          className={`p-2 rounded-full ${pathname.startsWith("/settings") ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}
+        >
+          <Mail size={22} />
+        </Link>
+        <Link
+          href="/settings/taxonomy"
+          className={`p-2 rounded-full ${pathname === "/settings/taxonomy" ? "text-indigo-600 bg-indigo-50" : "text-slate-500"}`}
+        >
+          <Tag size={22} />
+        </Link>
+        <button
+          onClick={() => setIsLogoutDialogOpen(true)}
+          className="p-2 rounded-full text-slate-500 hover:text-rose-600"
+        >
+          <LogOut size={22} />
         </button>
       </nav>
 
@@ -112,7 +148,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </main>
 
-      {/* Confirmation Dialog */}
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -124,9 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <DialogFooter className="gap-2 sm:items-center">
             <DialogClose
               render={(props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-                <Button {...props} variant="outline">
-                  Cancel
-                </Button>
+                <Button {...props} variant="outline">Cancel</Button>
               )}
             />
             <Button variant="destructive" onClick={confirmLogout}>

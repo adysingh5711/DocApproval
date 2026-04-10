@@ -10,7 +10,11 @@ export const seoConfig = {
     images: [
       {
         url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "DocApproval – Approvals that move at your pace.",
       },
+      // Static fallback kept second
       {
         url: "/images/og-image.png",
         width: 1200,
@@ -24,6 +28,6 @@ export const seoConfig = {
     site: "@docapproval",
     handle: "@docapproval",
     creator: "@singhaditya5711",
-    images: ["/images/og-image.png"],
+    images: ["/opengraph-image"]
   },
 };

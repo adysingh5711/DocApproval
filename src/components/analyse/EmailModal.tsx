@@ -84,10 +84,10 @@ export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: Emai
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-2xl border-slate-100">
+      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-2xl border-slate-100 flex flex-col max-h-[85vh]">
 
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-100">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
               <Mail size={16} className="text-indigo-600" />
@@ -104,7 +104,7 @@ export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: Emai
         </DialogHeader>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto min-h-0">
 
           {/* To */}
           <div className="space-y-1.5">
@@ -162,7 +162,7 @@ export function EmailModal({ open, onOpenChange, email, docTitle, docUrl }: Emai
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+        <div className="px-6 pb-6 pt-2 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}

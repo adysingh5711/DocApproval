@@ -9,7 +9,7 @@ import { useState } from "react";
 export interface Doc {
   id: string;
   title: string;
-  status: "APPROVED" | "PENDING" | "DECLINED" | "CANCELLED";
+  status: string;
   category: string;
   subcategory: string;
   isTracking: boolean;
@@ -27,7 +27,7 @@ const STATUS_CONFIG = {
 export function DocCard({ doc }: { doc: Doc }) {
   const removeDoc = useMutation(api.documents.remove);
   const [isDeleting, setIsDeleting] = useState(false);
-  const s = STATUS_CONFIG[doc.status];
+  const s = STATUS_CONFIG[doc.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.PENDING;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();

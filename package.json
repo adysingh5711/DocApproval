@@ -30,7 +30,7 @@
     "fuse.js": "^7.3.0",
     "googleapis": "^171.4.0",
     "lucide-react": "^1.7.0",
-    "next": "16.2.2",
+    "next": "16.2.10",
     "next-auth": "^4.24.13",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -45,8 +45,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
+    "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "postcss": "^8.5.10"
   }
 }
